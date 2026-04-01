@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run wiki_html_to_md_lance pipe locally on a Lance dataset."""
+"""Run the platform parse_html pipe locally on a Lance dataset."""
 
 from __future__ import annotations
 
@@ -19,23 +19,33 @@ import pyarrow as pa
 
 def _bootstrap_paths() -> Path:
     """Ensure repo root and local DCD repos are importable."""
-    root = Path(__file__).resolve().parents[3]
-    dcd_root = root / "refer_repo" / "dcd"
-    dcd_cli_root = root / "refer_repo" / "dcd-cli"
+    root = Path(__file__).resolve().parents[2]
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
-    if str(dcd_root) not in sys.path:
-        sys.path.insert(0, str(dcd_root))
-    if str(dcd_cli_root) not in sys.path:
-        sys.path.insert(0, str(dcd_cli_root))
+
+    dcd_candidates = (root / "refer_repo" / "dcd", root.parent / "dcd")
+    cli_candidates = (root / "refer_repo" / "dcd-cli", root.parent / "dcd-cli")
+    for dcd_root in dcd_candidates:
+        if dcd_root.is_dir():
+            if str(dcd_root) not in sys.path:
+                sys.path.insert(0, str(dcd_root))
+            break
+    for dcd_cli_root in cli_candidates:
+        if dcd_cli_root.is_dir():
+            if str(dcd_cli_root) not in sys.path:
+                sys.path.insert(0, str(dcd_cli_root))
+            break
     return root
 
 
 ROOT = _bootstrap_paths()
 
 from dcd_cli.pipe import PipeContext  # noqa: E402
-from dataclawdev.data.util.prepare_dataset import run as prepare_dataset  # noqa: E402
-from wiki.pipe.wiki_html_to_md_lance import map as pipe_map  # noqa: E402
+from wiki._module_loader import load_pipe_package  # noqa: E402
+
+PIPE_NAME = "stage3_parse_html"
+PIPE_MODULE = load_pipe_package(Path(__file__).resolve().parent, alias=f"{PIPE_NAME}_pkg")
+pipe_map = PIPE_MODULE.map
 
 _WORKER_MAP = None
 _WORKER_CTX = None
@@ -66,30 +76,36 @@ def _worker_init(
     dataset: str,
     dataset_dir_str: str,
     remove_ref: bool,
-    max_item_seconds: int,
-    rewrite_images: bool,
+    out_format: str,
+    timeout: int,
 ) -> None:
     global _WORKER_MAP, _WORKER_CTX
     root = Path(root_str)
-    dcd_root = root / "refer_repo" / "dcd"
-    dcd_cli_root = root / "refer_repo" / "dcd-cli"
-    for p in (str(root), str(dcd_root), str(dcd_cli_root)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    for dcd_root in (root / "refer_repo" / "dcd", root.parent / "dcd"):
+        if dcd_root.is_dir() and str(dcd_root) not in sys.path:
+            sys.path.insert(0, str(dcd_root))
+            break
+    for dcd_cli_root in (root / "refer_repo" / "dcd-cli", root.parent / "dcd-cli"):
+        if dcd_cli_root.is_dir() and str(dcd_cli_root) not in sys.path:
+            sys.path.insert(0, str(dcd_cli_root))
+            break
     from dcd_cli.pipe import PipeContext as _PipeContext
-    from wiki.pipe.wiki_html_to_md_lance import map as _pipe_map
 
-    _WORKER_MAP = _pipe_map
+    _WORKER_MAP = load_pipe_package(
+        Path(__file__).resolve().parent,
+        alias=f"{PIPE_NAME}_worker_pkg",
+    ).map
     _WORKER_CTX = _PipeContext(
         dataset=dataset,
-        pipe_name="wiki_html_to_md_lance",
-        pipe_version=1,
+        pipe_name=PIPE_NAME,
+        pipe_version=9,
         dataset_dir=Path(dataset_dir_str),
         config={
             "remove_ref": remove_ref,
-            "max_item_seconds": max_item_seconds,
-            "rewrite_images": rewrite_images,
-            "dataset_dir": dataset_dir_str,
+            "out_format": out_format,
+            "timeout": timeout,
         },
     )
 
@@ -113,7 +129,6 @@ def _iter_batches(
 
 
 def _verify_same_order(src_text: Path, dst_text: Path) -> None:
-    """Ensure output text.lance keeps the same row order as input."""
     src_ids = (
         lance.dataset(str(src_text))
         .to_table(columns=["id"])
@@ -143,8 +158,8 @@ def run(
     *,
     batch_size: int = 64,
     remove_ref: bool = False,
-    max_item_seconds: int = 8,
-    rewrite_images: bool = True,
+    out_format: str = "md",
+    timeout: int = 30,
     workers: int = 1,
     run_prepare: bool = True,
 ) -> None:
@@ -163,14 +178,13 @@ def run(
 
     ctx = PipeContext(
         dataset=src_dataset_dir.name,
-        pipe_name="wiki_html_to_md_lance",
-        pipe_version=1,
+        pipe_name=PIPE_NAME,
+        pipe_version=9,
         dataset_dir=src_dataset_dir,
         config={
             "remove_ref": remove_ref,
-            "max_item_seconds": max_item_seconds,
-            "rewrite_images": rewrite_images,
-            "dataset_dir": str(src_dataset_dir),
+            "out_format": out_format,
+            "timeout": timeout,
         },
     )
 
@@ -178,7 +192,7 @@ def run(
     print(f"target: {dst_dataset_dir}")
     print(
         f"rows: {total}, batch_size: {batch_size}, remove_ref={remove_ref}, "
-        f"max_item_seconds={max_item_seconds}, rewrite_images={rewrite_images}",
+        f"out_format={out_format}, timeout={timeout}",
     )
 
     t0 = time.time()
@@ -214,8 +228,8 @@ def run(
                 src_dataset_dir.name,
                 str(src_dataset_dir),
                 remove_ref,
-                max_item_seconds,
-                rewrite_images,
+                out_format,
+                timeout,
             ),
         ) as pool:
             pending: dict[cf.Future[tuple[int, int, dict[str, list[Any]]]], int] = {}
@@ -272,15 +286,17 @@ def run(
             _link_or_replace(src_table, dst_table)
 
     if run_prepare:
+        from dataclawdev.data.util.prepare_dataset import run as prepare_dataset_run
+
         print("prepare_dataset: start (tokenizer=simple)")
-        prepare_dataset(dst_dataset_dir, base_tokenizer="simple")
+        prepare_dataset_run(dst_dataset_dir, base_tokenizer="simple")
         print("prepare_dataset: done")
 
     print(f"done in {time.time() - t0:.1f}s")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run wiki_html_to_md_lance pipe locally")
+    parser = argparse.ArgumentParser(description="Run platform parse_html locally")
     parser.add_argument(
         "src_dataset_dir",
         nargs="?",
@@ -291,17 +307,17 @@ def main() -> None:
         "dst_dataset_dir",
         nargs="?",
         type=Path,
-        default=ROOT / "workspace" / "md_lance" / "wiki_0320_en_has_pic",
+        default=ROOT / "workspace" / "md_lance" / "wiki_0320_en_has_pic_v2_md",
     )
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--remove-ref", action="store_true")
-    parser.add_argument("--max-item-seconds", type=int, default=8)
+    parser.add_argument("--out-format", choices=("md", "html"), default="md")
+    parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument(
         "--workers",
         type=int,
         default=max(1, (os.cpu_count() or 2) - 1),
     )
-    parser.add_argument("--no-rewrite-images", action="store_true")
     parser.add_argument("--no-prepare", action="store_true")
     args = parser.parse_args()
 
@@ -310,8 +326,8 @@ def main() -> None:
         args.dst_dataset_dir.resolve(),
         batch_size=max(1, args.batch_size),
         remove_ref=args.remove_ref,
-        max_item_seconds=args.max_item_seconds,
-        rewrite_images=not args.no_rewrite_images,
+        out_format=args.out_format,
+        timeout=max(1, args.timeout),
         workers=max(1, args.workers),
         run_prepare=not args.no_prepare,
     )

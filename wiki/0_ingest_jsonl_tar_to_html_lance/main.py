@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert wiki part*.jsonl + part*.tar into Lance datasets.
+"""Ingest wiki part*.jsonl + part*.tar source into Lance datasets.
 
 Output tables:
 - text.lance
@@ -23,6 +23,10 @@ from urllib.parse import unquote
 
 import lance
 import pyarrow as pa
+try:
+    from dcd_cli.pipe import PipeContext
+except ImportError:  # pragma: no cover - helper-only imports in unit tests
+    PipeContext = Any  # type: ignore[misc,assignment]
 
 log = logging.getLogger(__name__)
 
@@ -109,6 +113,66 @@ def extract_html_meta(html: str) -> dict[str, object]:
             tags.append(cat.replace("&amp;", "&"))
     result["tags"] = tags
     return result
+
+
+def build_text_info(
+    entry: dict[str, Any],
+    *,
+    url: str,
+    title: str,
+    image_ids_for_article: list[str],
+) -> dict[str, object]:
+    """Build text-row info with derived fields plus preserved raw metadata."""
+    info: dict[str, object] = {
+        "format": "html",
+        "url": url,
+        "title": title,
+    }
+    if image_ids_for_article:
+        info["image_ids"] = image_ids_for_article
+
+    raw_url = entry.get("url")
+    if raw_url not in (None, ""):
+        info["original_url"] = raw_url
+
+    raw_final_url = entry.get("final_url")
+    if raw_final_url not in (None, ""):
+        info["final_url"] = raw_final_url
+
+    for key, value in entry.items():
+        if key in {"html", "images", "url", "final_url"}:
+            continue
+        if value is None or value == "":
+            continue
+        info[key] = value
+
+    return info
+
+
+def build_image_info(
+    img_meta: dict[str, Any],
+    *,
+    article_id: str,
+) -> dict[str, object]:
+    """Build image-label info preserving raw image metadata keys."""
+    info: dict[str, object] = {
+        "text_ids": [article_id],
+    }
+
+    for key, value in img_meta.items():
+        if value is None or value == "":
+            continue
+        info[key] = value
+
+    image_url = img_meta.get("image_url")
+    if image_url not in (None, ""):
+        info["url"] = image_url
+
+    caption_text = img_meta.get("caption_text")
+    if caption_text not in (None, ""):
+        info["caption"] = caption_text
+
+    return info
 
 
 def rewrite_html_images(
@@ -223,7 +287,13 @@ def compact_lance(lance_path: Path, table_name: str) -> None:
     log.info("Compact %s done in %s", table_name, _fmt_seconds(time.perf_counter() - t0))
 
 
-def run_streaming(src_dir: Path, dst_dir: Path, *, log_interval: int) -> None:
+def run_streaming(
+    src_dir: Path,
+    dst_dir: Path,
+    *,
+    log_interval: int,
+    ctx: PipeContext | None = None,
+) -> None:
     pairs = _find_pairs(src_dir)
     line_counts = [_count_non_empty_lines(jf) for jf, _ in pairs]
     total_articles = sum(line_counts)
@@ -315,29 +385,14 @@ def run_streaming(src_dir: Path, dst_dir: Path, *, log_interval: int) -> None:
                     img_bytes_list.append(raw_bytes)
                     img_sha256_list.append(hashlib.sha256(raw_bytes).hexdigest())
 
-                    img_info: dict[str, object] = {"text_ids": [article_id]}
-                    image_url = img_meta.get("image_url")
-                    if image_url:
-                        img_info["url"] = image_url
-                    width = img_meta.get("width")
-                    height = img_meta.get("height")
-                    if width:
-                        img_info["width"] = width
-                    if height:
-                        img_info["height"] = height
-                    caption_title = img_meta.get("caption_title", "")
-                    if caption_title:
-                        img_info["caption_title"] = caption_title
-                    caption = img_meta.get("caption_text", "")
-                    if caption:
-                        img_info["caption"] = caption
-                    md5 = img_meta.get("image_md5", "")
-                    if md5:
-                        img_info["md5"] = md5
+                    img_info = build_image_info(
+                        img_meta,
+                        article_id=article_id,
+                    )
 
                     imgdata_ids.append(image_id)
                     imgdata_infos.append(json.dumps(img_info, ensure_ascii=False))
-                    imgdata_datas.append(str(caption))
+                    imgdata_datas.append(str(img_meta.get("caption_text", "")))
                     imgdata_tags.append([])
 
                 # Keep original remote image URLs for now.
@@ -348,20 +403,12 @@ def run_streaming(src_dir: Path, dst_dir: Path, *, log_interval: int) -> None:
                 # )
                 _ = available_ids
 
-                info: dict[str, object] = {
-                    "format": "html",
-                    "url": url,
-                    "title": title,
-                }
-                if image_ids_for_article:
-                    info["image_ids"] = image_ids_for_article
-                original_url = entry.get("url", "")
-                if original_url and original_url != url:
-                    info["original_url"] = original_url
-                for key in ("crawl_time", "crawl_type", "page_type", "part", "image_status"):
-                    val = entry.get(key)
-                    if val is not None and val != "":
-                        info[key] = val
+                info = build_text_info(
+                    entry,
+                    url=url,
+                    title=title,
+                    image_ids_for_article=image_ids_for_article,
+                )
 
                 text_ids.append(article_id)
                 text_infos.append(json.dumps(info, ensure_ascii=False))
@@ -369,6 +416,8 @@ def run_streaming(src_dir: Path, dst_dir: Path, *, log_interval: int) -> None:
                 text_tags.append(tags)
 
                 done = text_written + processed_in_part
+                if ctx is not None:
+                    ctx.set_progress(done, total_articles, f"{jf.name}:{processed_in_part}")
                 if log_interval > 0 and (processed_in_part % log_interval == 0 or processed_in_part == part_total):
                     elapsed = time.perf_counter() - t0
                     speed = done / elapsed if elapsed > 0 else 0.0
@@ -448,6 +497,45 @@ def run_streaming(src_dir: Path, dst_dir: Path, *, log_interval: int) -> None:
         _fmt_seconds(time.perf_counter() - compact_t0),
         dst_dir,
     )
+
+
+def _get_source_dir(config: dict[str, Any] | None) -> Path:
+    raw = (config or {}).get("source_dir", "")
+    source_dir = Path(str(raw)).expanduser()
+    if not str(raw).strip():
+        raise ValueError("config.source_dir is required for ingest")
+    return source_dir.resolve()
+
+
+def _get_log_interval(config: dict[str, Any] | None) -> int:
+    raw = (config or {}).get("log_interval", DEFAULT_LOG_INTERVAL)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = DEFAULT_LOG_INTERVAL
+    return max(1, value)
+
+
+def ingest(ctx: PipeContext) -> Path | None:
+    """Ingest raw wiki jsonl+tar source into a Lance dataset directory."""
+    output_dir = ctx.output_dir
+    assert output_dir is not None
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    source_dir = _get_source_dir(ctx.config)
+    log_interval = _get_log_interval(ctx.config)
+    run_streaming(
+        source_dir,
+        output_dir,
+        log_interval=log_interval,
+        ctx=ctx,
+    )
+    return output_dir
 
 
 def main() -> None:
