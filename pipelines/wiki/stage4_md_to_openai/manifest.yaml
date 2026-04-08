@@ -1,0 +1,25 @@
+name: stage4_md_to_openai
+author: yao.lewei1@huawei.com
+description: >-
+  Convert wiki markdown text.lance to OpenAI-style messages with role-based
+  content parts. Removes leading YAML front matter, drops non-local markdown
+  images, and filters tiny local images from image_labels metadata only.
+  Only rewrites text.lance; reuse images via dataset layout.
+operation: map
+network: false
+input_format: [md]
+input_fields:
+  text: [id, data, info]
+output_format: json
+output_fields:
+  text: [data, info]
+config:
+  - name: message_role
+    type: str
+    default: user
+    label: Role used for the single generated OpenAI message
+  - name: max_small_area
+    type: int
+    default: 784
+    label: Drop images with width*height <= this (784 = 28x28)
+tags: [wiki, markdown, openai, multimodal, lance]

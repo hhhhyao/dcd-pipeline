@@ -5,6 +5,7 @@ workspace/
 .env
 .env.*
 .server_info
+.server_info.local
 .venv/
 venv/
 
@@ -51,3 +52,6 @@ Thumbs.db
 
 # Lance working directories (pipeline outputs, not fixtures)
 workspace/
+
+# Local archived pipelines kept outside git history
+pipelines/wiki/old_pipelines/

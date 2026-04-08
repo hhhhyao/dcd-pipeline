@@ -1,0 +1,12 @@
+name: stage1_html_localize_image_ids
+author: yao.lewei1@huawei.com
+description: Temporarily localize HTML image URLs using existing per-row image IDs
+operation: map
+network: false
+input_format: [html]
+input_fields:
+  text: [id, data, info, tags]
+output_format: html
+output_fields:
+  text: [data, info]
+tags: [wiki, html, image, lance, temporary]

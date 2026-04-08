@@ -1,0 +1,12 @@
+# Remote DCD server
+DCD_HOST="https://bluezone-alpha.dataclaw.dev/"
+DCD_TOKEN=""
+
+# Optional author identity for uploads
+DCD_AUTHOR=""
+
+# Local DCD viewer / login
+DCD_LOGIN_EMAIL=""
+DCD_LOGIN_PASSWORD=""
+DCD_APP_HOST="0.0.0.0"
+DCD_APP_PORT="8000"

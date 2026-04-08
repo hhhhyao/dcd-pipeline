@@ -1,0 +1,24 @@
+name: stage3_parse_html
+description: Parse raw HTML into cleaned markdown and simplified HTML with agent in the loop
+author: yao.lewei@huawei.com
+operation: map
+input_format: [html]
+input_fields:
+  text: [id, data, info]
+output_format: md
+output_fields:
+  text: [data, info]
+config:
+  - name: remove_ref
+    type: bool
+    default: false
+    label: Remove references
+  - name: out_format
+    type: select
+    default: md
+    options: [md, html]
+    label: Output format
+  - name: timeout
+    type: int
+    default: 30
+    label: Parse timeout (seconds)

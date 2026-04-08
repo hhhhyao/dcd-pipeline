@@ -1,0 +1,558 @@
+
+
+
+
+
+
+<table><tbody><tr><th colspan="2">Java</th></tr><tr><td colspan="2"><a href="https://en.wikipedia.org/wiki/File:Java_programming_language_logo.svg"><img src="//upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/250px-Java_programming_language_logo.svg.png"></a></td></tr><tr><th>Paradigm</th><td>Multi-paradigm: generic, object-oriented (class-based), functional, imperative, reflective, concurrent</td></tr><tr><th>Designed by</th><td>James Gosling</td></tr><tr><th>Developer</th><td>Oracle Corporation</td></tr><tr><th>First appeared</th><td>May 23, 1995<sup>[1]</sup></td></tr><tr><th>Stable release</th><td>Java SE 25<sup>[2]</sup> <img alt="Edit this on Wikidata" src="//upload.wikimedia.org/wikipedia/en/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/20px-OOjs_UI_icon_edit-ltr-progressive.svg.png">
+   / 16 September 2025</td></tr><tr><th>Typing discipline</th><td>Static, strong, safe, nominative, manifest</td></tr><tr><th>Memory management</th><td>Garbage-collected</td></tr><tr><th>Filename extensions</th><td>.java, .class, .jar, .jmod, .war</td></tr><tr><th>Website</th><td><ul><li>oracle.com/java/</li><li>java.com</li><li>dev.java</li></ul></td></tr><tr><th colspan="2">Influenced by</th></tr><tr><td colspan="2">CLU,<sup>[3]</sup> Simula67,<sup>[3]</sup> Lisp,<sup>[3]</sup> Smalltalk,<sup>[3]</sup> Ada 83, C++,<sup>[4]</sup> C#,<sup>[5]</sup> Eiffel,<sup>[6]</sup> Mesa,<sup>[7]</sup> Modula-3,<sup>[8]</sup> Oberon,<sup>[9]</sup> Objective-C,<sup>[10]</sup> UCSD Pascal,<sup>[11]</sup><sup>[12]</sup> Object Pascal<sup>[13]</sup></td></tr><tr><th colspan="2">Influenced</th></tr><tr><td colspan="2">Ada 2005, ArkTS, BeanShell, C#, Chapel,<sup>[14]</sup> Clojure, ECMAScript, Fantom, Gambas,<sup>[15]</sup> Groovy, Hack,<sup>[16]</sup> Haxe, J#, JavaScript, JS++, Kotlin, PHP, Python, Scala, Vala</td></tr><tr><td colspan="2">
+<ul><li><a href="https://en.wikipedia.org/wiki/File:Wikibooks-logo-en-noslogan.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/d/df/Wikibooks-logo-en-noslogan.svg/40px-Wikibooks-logo-en-noslogan.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/d/df/Wikibooks-logo-en-noslogan.svg/40px-Wikibooks-logo-en-noslogan.svg.png 1.5x"></a> Java Programming at Wikibooks</li></ul>
+</td></tr></tbody></table>
+
+<p><b>Java</b> is a high-level, general-purpose, memory-safe, object-oriented programming language. It is intended to let programmers <i>write once, run anywhere</i> (WORA),<sup>[17]</sup> meaning that compiled Java code can run on all platforms that support Java without the need to recompile.<sup>[18]</sup> Java applications are typically compiled to bytecode that can run on any Java virtual machine (JVM) regardless of the underlying computer architecture. The syntax of Java is similar to C and C++, but has fewer low-level facilities than either of them. The Java runtime provides dynamic capabilities (such as reflection and runtime code modification) that are typically not available in traditional compiled languages.
+</p><p>Java gained popularity shortly after its release, and has been a popular programming language since then.<sup>[19]</sup> Java was the third most popular programming language in 2022 according to GitHub.<sup>[20]</sup> Although still widely popular, there has been a gradual decline in use of Java in recent years with other languages using JVM gaining popularity.<sup>[21]</sup>
+</p><p>Java was designed by James Gosling at Sun Microsystems. It was released in May 1995 as a core component of Sun's Java platform. The original and reference implementation Java compilers, virtual machines, and class libraries were released by Sun under proprietary licenses. As of May 2007, in compliance with the specifications of the Java Community Process, Sun had relicensed most of its Java technologies under the GPL-2.0-only license. Oracle, which bought Sun in 2010, offers its own HotSpot Java Virtual Machine. However, the official reference implementation is the OpenJDK JVM, which is open-source software used by most developers and is the default JVM for almost all Linux distributions.
+</p><p>Java 25 is the version current as of September 2025. Java 8, 11, 17, 21, and 25 are long-term support versions still under maintenance.
+</p>
+
+<h2>History</h2>
+
+<figure><a href="https://en.wikipedia.org/wiki/File:Duke_(Java_mascot)_waving.svg"><img src="//upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Duke_%28Java_mascot%29_waving.svg/330px-Duke_%28Java_mascot%29_waving.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Duke_%28Java_mascot%29_waving.svg/330px-Duke_%28Java_mascot%29_waving.svg.png 2x"></a><figcaption>Duke, the Java mascot</figcaption></figure>
+<figure><a href="https://en.wikipedia.org/wiki/File:James_Gosling_2008.jpg"><img src="//upload.wikimedia.org/wikipedia/commons/thumb/1/14/James_Gosling_2008.jpg/500px-James_Gosling_2008.jpg" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/1/14/James_Gosling_2008.jpg/500px-James_Gosling_2008.jpg 1.5x"></a><figcaption>James Gosling, the creator of Java, in 2008</figcaption></figure>
+<p>James Gosling, Mike Sheridan, and Patrick Naughton initiated the Java language project in June 1991.<sup>[22]</sup> Java was originally designed for interactive television, but it was too advanced for the digital cable television industry at the time.<sup>[23]</sup> The language was initially called <i>Oak</i> after an oak tree that stood outside Gosling's office. Later the project went by the name <i>Green</i> and was finally renamed <i>Java</i>, from Java coffee, a type of coffee from Indonesia.<sup>[24]</sup> Gosling designed Java with a C/C++-style syntax that system and application programmers would find familiar.<sup>[25]</sup>
+</p><p>Sun Microsystems released the first public implementation as Java 1.0 in 1996.<sup>[26]</sup> It promised write once, run anywhere (WORA) functionality, providing no-cost run-times on popular platforms. Fairly secure and featuring configurable security, it allowed network- and file-access restrictions. Major web browsers soon incorporated the ability to run Java applets within web pages, and Java quickly became popular. The Java 1.0 compiler was re-written in Java by Arthur van Hoff to comply strictly with the Java 1.0 language specification.<sup>[27]</sup> With the advent of Java 2 (released initially as J2SE 1.2 in December 1998 –  1999), new versions had multiple configurations built for different types of platforms. J2EE included technologies and APIs for enterprise applications typically run in server environments, while J2ME featured APIs optimized for mobile applications. The desktop version was renamed J2SE. In 2006, for marketing purposes, Sun renamed new J2 versions as <i>Java EE</i>, <i>Java ME</i>, and <i>Java SE</i>, respectively.
+</p><p>In 1997, Sun Microsystems approached the ISO/IEC JTC 1 standards body and later the Ecma International to formalize Java, but it soon withdrew from the process.<sup>[28]</sup><sup>[29]</sup><sup>[30]</sup> Java remains a <i>de facto</i> standard, controlled through the Java Community Process.<sup>[31]</sup> At one time, Sun made most of its Java implementations available without charge, despite their proprietary software status. Sun generated revenue from Java through the selling of licenses for specialized products such as the Java Enterprise System.
+</p><p>On November 13, 2006, Sun released much of its Java virtual machine (JVM) as free and open-source software (FOSS), under the terms of the GPL-2.0-only license. On May 8, 2007, Sun finished the process, making all of its JVM's core code available under free software/open-source distribution terms, aside from a small portion of code to which Sun did not hold the copyright.<sup>[32]</sup>
+</p><p>Sun's vice-president Rich Green said that Sun's ideal role with regard to Java was as an <i>evangelist</i>.<sup>[33]</sup> Following Oracle Corporation's acquisition of Sun Microsystems in 2009–10, Oracle has described itself as the steward of Java technology with a relentless commitment to fostering a community of participation and transparency.<sup>[34]</sup> This did not prevent Oracle from filing a lawsuit against Google shortly after that for using Java inside the Android SDK (see the <i>Android</i> section).
+</p><p>On April 2, 2010, James Gosling resigned from Oracle.<sup>[35]</sup>
+</p><p>In January 2016, Oracle announced that Java run-time environments based on JDK 9 will discontinue the browser plugin.<sup>[36]</sup>
+</p><p>Java software runs on most devices from laptops to data centers, game consoles to scientific supercomputers.<sup>[37]</sup>
+</p><p>Oracle (and others) highly recommend uninstalling outdated and unsupported versions of Java, due to unresolved security issues in older versions.<sup>[38]</sup>
+</p>
+<h3>Principles</h3>
+<p>There were five primary goals in creating the Java language:<sup>[18]</sup>
+</p>
+<ol><li>It must be simple, object-oriented, and familiar.</li>
+<li>It must be robust and secure.</li>
+<li>It must be architecture-neutral and portable.</li>
+<li>It must execute with high performance.</li>
+<li>It must be interpreted, threaded, and dynamic.</li></ol>
+<h3>Versions</h3>
+
+<p>As of September 2025, Java 8, 11, 17, 21, and 25 are supported as long-term support (LTS) versions.<sup>[39]</sup>
+</p><p>Oracle released the last zero-cost public update for the legacy version Java 8 LTS in January 2019 for commercial use, although it will otherwise still support Java 8 with public updates for personal use indefinitely. Other vendors such as Adoptium continue to offer free builds of OpenJDK's long-term support (LTS) versions. These builds may include additional security patches and bug fixes.<sup>[40]</sup>
+</p><p>Major release versions of Java, along with their release dates:
+</p>
+<table>
+<tbody><tr>
+<th>Version</th>
+<th>Date
+</th></tr>
+<tr>
+<td>JDK Beta</td>
+<td>1995
+</td></tr>
+<tr>
+<td>JDK 1.0</td>
+<td>January 23, 1996<sup>[41]</sup>
+</td></tr>
+<tr>
+<td>JDK 1.1</td>
+<td>February 19, 1997
+</td></tr>
+<tr>
+<td>J2SE 1.2</td>
+<td>December 8, 1998
+</td></tr>
+<tr>
+<td>J2SE 1.3</td>
+<td>May 8, 2000
+</td></tr>
+<tr>
+<td>J2SE 1.4</td>
+<td>February 6, 2002
+</td></tr>
+<tr>
+<td>J2SE 5.0</td>
+<td>September 30, 2004
+</td></tr>
+<tr>
+<td>Java SE 6</td>
+<td>December 11, 2006
+</td></tr>
+<tr>
+<td>Java SE 7</td>
+<td>July 28, 2011
+</td></tr>
+<tr>
+<td>Java SE 8 (LTS)</td>
+<td>March 18, 2014
+</td></tr>
+<tr>
+<td>Java SE 9</td>
+<td>September 21, 2017
+</td></tr>
+<tr>
+<td>Java SE 10</td>
+<td>March 20, 2018
+</td></tr>
+<tr>
+<td>Java SE 11 (LTS)</td>
+<td>September 25, 2018<sup>[42]</sup>
+</td></tr>
+<tr>
+<td>Java SE 12</td>
+<td>March 19, 2019
+</td></tr>
+<tr>
+<td>Java SE 13</td>
+<td>September 17, 2019
+</td></tr>
+<tr>
+<td>Java SE 14</td>
+<td>March 17, 2020
+</td></tr>
+<tr>
+<td>Java SE 15</td>
+<td>September 15, 2020<sup>[43]</sup>
+</td></tr>
+<tr>
+<td>Java SE 16</td>
+<td>March 16, 2021
+</td></tr>
+<tr>
+<td>Java SE 17 (LTS)</td>
+<td>September 14, 2021
+</td></tr>
+<tr>
+<td>Java SE 18</td>
+<td>March 22, 2022
+</td></tr>
+<tr>
+<td>Java SE 19</td>
+<td>September 20, 2022
+</td></tr>
+<tr>
+<td>Java SE 20</td>
+<td>March 21, 2023
+</td></tr>
+<tr>
+<td>Java SE 21 (LTS)</td>
+<td>September 19, 2023<sup>[44]</sup>
+</td></tr>
+<tr>
+<td>Java SE 22</td>
+<td>March 19, 2024
+</td></tr>
+<tr>
+<td>Java SE 23</td>
+<td>September 17, 2024
+</td></tr>
+<tr>
+<td>Java SE 24</td>
+<td>18 March 2025<sup>[45]</sup>
+</td></tr>
+<tr>
+<td>Java SE 25 (LTS)</td>
+<td>16 September 2025<sup>[46]</sup>
+</td></tr></tbody></table>
+<h2>Editions</h2>
+
+
+<p>Sun has defined and supports four editions of Java targeting different application environments and segmented many of its APIs so that they belong to one of the platforms. The platforms are:
+</p>
+<ul><li>Java Card for smart-cards.<sup>[47]</sup></li>
+<li>Java Platform, Micro Edition (Java ME) – targeting environments with limited resources.<sup>[48]</sup></li>
+<li>Java Platform, Standard Edition (Java SE) – targeting workstation environments.<sup>[49]</sup></li>
+<li>Java Platform, Enterprise Edition (Java EE) – targeting large distributed enterprise or Internet environments.<sup>[50]</sup></li></ul>
+<p>The classes in the Java APIs are organized into separate groups called packages. Each package contains a set of related interfaces, classes, subpackages and exceptions.
+</p><p>Sun also provided an edition called Personal Java that has been superseded by later, standards-based Java ME configuration-profile pairings.
+</p>
+<h2>Execution system</h2>
+<h3>Java JVM and bytecode</h3>
+
+<p>One design goal of Java is portability, which means that programs written for the Java platform must run similarly on any combination of hardware and operating system with adequate run time support. This is achieved by compiling the Java language code to an intermediate representation called Java bytecode, instead of directly to architecture-specific machine code. Java bytecode instructions are analogous to machine code, but they are intended to be executed by a virtual machine (VM) written specifically for the host hardware. End-users commonly use a Java Runtime Environment (JRE) installed on their device for standalone Java applications or a web browser for Java applets.
+</p><p>Standard libraries provide a generic way to access host-specific features such as graphics, threading, and networking.
+</p><p>The use of universal bytecode makes porting simple. However, the overhead of interpreting bytecode into machine instructions made interpreted programs almost always run more slowly than native executables. Just-in-time (JIT) compilers that compile byte-codes to machine code during runtime were introduced from an early stage. Java's Hotspot compiler is actually two compilers in one, with GraalVM (included in e.g. Java 11, but removed as of Java 16) allowing tiered compilation.<sup>[51]</sup> Java itself is platform-independent and is adapted to the particular platform it is to run on by a Java virtual machine (JVM), which translates the Java bytecode into the platform's machine language.<sup>[52]</sup>
+</p>
+<h4>Performance</h4>
+
+<p>Programs written in Java have a reputation for being slower and requiring more memory than those written in C++.<sup>[53]</sup><sup>[54]</sup> However, Java programs' execution speed improved significantly with the introduction of just-in-time compilation in 1997/1998 for Java 1.1,<sup>[55]</sup> the addition of language features supporting better code analysis (such as inner classes, the StringBuilder class, optional assertions, etc.), and optimizations in the Java virtual machine, such as HotSpot becoming Sun's default JVM in 2000. With Java 1.5, the performance was improved with the addition of the <code>java.util.concurrent</code> package, including lock-free implementations of the ConcurrentMaps and other multi-core collections, and it was improved further with Java 1.6.
+</p>
+<h3>Non-JVM</h3>
+<p>Some platforms offer direct hardware support for Java; there are micro controllers that can run Java bytecode in hardware instead of a software Java virtual machine,<sup>[56]</sup> and some ARM-based processors could have hardware support for executing Java bytecode through their Jazelle option, though support has mostly been dropped in current implementations of ARM.
+</p>
+<h3>Automatic memory management</h3>
+<p>Java uses an automatic garbage collector to manage memory in the object lifecycle. The programmer determines when objects are created, and the Java runtime is responsible for recovering the memory once objects are no longer in use. Once no references to an object remain, the unreachable memory becomes eligible to be freed automatically by the garbage collector. Something similar to a memory leak may still occur if a programmer's code holds a reference to an object that is no longer needed, typically when objects that are no longer needed are stored in containers that are still in use.<sup>[57]</sup> If methods for a non-existent object are called, a null pointer exception is thrown.<sup>[58]</sup><sup>[59]</sup>
+</p><p>One of the ideas behind Java's automatic memory management model is that programmers can be spared the burden of having to perform manual memory management. In some languages, memory for the creation of objects is implicitly allocated on the stack or explicitly allocated and deallocated from the heap. In the latter case, the responsibility of managing memory resides with the programmer. If the program does not deallocate an object, a memory leak occurs.<sup>[57]</sup> If the program attempts to access or deallocate memory that has already been deallocated, the result is undefined and difficult to predict, and the program is likely to become unstable or crash. This can be partially remedied by the use of smart pointers, but these add overhead and complexity. Garbage collection does not prevent logical memory leaks, i.e. those where the memory is still referenced but never used.<sup>[57]</sup>
+</p><p>Garbage collection may happen at any time. Ideally, it will occur when a program is idle. It is guaranteed to be triggered if there is insufficient free memory on the heap to allocate a new object; this can cause a program to stall momentarily. Explicit memory management is not possible in Java, however it is possible to  make the JVM do garbage collection manually<sup>[60]</sup>.
+</p><p>Java does not support C/C++ style pointer arithmetic,<sup>[61]</sup> where object addresses can be arithmetically manipulated (e.g. by adding or subtracting an offset). This allows the garbage collector to relocate referenced objects and ensures type safety and security.
+</p><p>As in C++ and some other object-oriented languages, variables of Java's primitive data types are either stored directly in fields (for objects) or on the stack (for methods) rather than on the heap, as is commonly true for non-primitive data types (but see escape analysis). This was a conscious decision by Java's designers for performance reasons.
+</p><p>Java contains multiple types of garbage collectors. Since Java 9, HotSpot uses the Garbage First Garbage Collector (G1GC) as the default.<sup>[62]</sup> However, there are also several other garbage collectors that can be used to manage the heap, such as the Z Garbage Collector (ZGC) introduced in Java 11, and Shenandoah GC, introduced in Java 12 but unavailable in Oracle-produced OpenJDK builds. Shenandoah is instead available in third-party builds of OpenJDK, such as Eclipse Temurin. For most applications in Java, G1GC is sufficient. In prior versions of Java, such as Java 8, the Parallel Garbage Collector was used as the default garbage collector.
+</p><p>Having solved the memory management problem does not relieve the programmer of the burden of handling properly other kinds of resources, like network or database connections, file handles, etc., especially in the presence of exceptions.
+</p>
+<h2>Syntax</h2>
+
+<figure><a href="https://en.wikipedia.org/wiki/File:JavaUniverse.png"><img src="//upload.wikimedia.org/wikipedia/commons/thumb/7/7f/JavaUniverse.png/330px-JavaUniverse.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/7/7f/JavaUniverse.png/330px-JavaUniverse.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/7/7f/JavaUniverse.png/500px-JavaUniverse.png 2x"></a><figcaption>This dependency graph of the Java Core classes was created with jdeps and Gephi.</figcaption></figure>
+<p>The syntax of Java is largely influenced by C++ and C. Unlike C++, which combines the syntax for structured, generic, and object-oriented programming, Java was built almost exclusively as an object-oriented language.<sup>[18]</sup> All code is written inside classes, and every data item is an object, with the exception of the primitive data types, (i.e. integers, floating-point numbers, boolean values, and characters), which are not objects for performance reasons.
+</p><p>Unlike C++, Java does not support operator overloading<sup>[63]</sup> or multiple inheritance for classes, though multiple inheritance is supported for interfaces.<sup>[64]</sup>
+</p><p>Java uses comments similar to those of C++. There are three different styles of comments: a single line style marked with two slashes (<code>//</code>), a multiple line style opened with <code>/*</code> and closed with <code>*/</code>, and the Javadoc commenting style opened with <code>/**</code> and closed with <code>*/</code>. The Javadoc style of commenting allows the user to run the Javadoc executable to create documentation for the program and can be read by some integrated development environments (IDEs) such as Eclipse to allow developers to access documentation within the IDE.
+</p>
+<h3>Hello world</h3>
+<p>The following is an example of a "Hello, World!" program in the traditional Java syntax:
+</p>
+<pre>public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
+    }
+}
+</pre>
+<p>Java 25 introduced a simplified syntax for the main class and main method, which enables users to write small Java programs succinctly:<sup>[65]</sup><sup>[66]</sup>
+</p>
+<pre>void main() {
+    IO.println("Hello World!");
+}
+</pre>
+<h2>Special classes</h2>
+
+<h3>Applet</h3>
+
+<p>Java applets were programs embedded in other applications, mainly in web pages displayed in web browsers. The Java applet API was deprecated with the release of Java 9 in 2017.<sup>[67]</sup><sup>[68]</sup>
+</p>
+<h3>Servlet</h3>
+
+<p>Java servlet technology provides Web developers with a simple, consistent mechanism for extending the functionality of a Web server and for accessing existing business systems. Servlets are server-side Java EE components that generate responses to requests from clients. Most of the time, this means generating HTML pages in response to HTTP requests, although there are a number of other standard servlet classes available, for example for WebSocket communication.
+</p><p>The Java servlet API has to some extent been superseded (but still used under the hood) by two standard Java technologies for web services:
+</p>
+<ul><li>the Java API for RESTful Web Services (JAX-RS 2.0) useful for AJAX, JSON and REST services, and</li>
+<li>the Java API for XML Web Services (JAX-WS) useful for SOAP Web Services.</li></ul>
+<p>Typical implementations of these APIs on Application Servers or Servlet Containers use a standard servlet for handling all interactions with the HTTP requests and responses that delegate to the web service methods for the actual business logic.
+</p>
+<h3>JavaServer Pages</h3>
+
+<p>JavaServer Pages (JSP) are server-side Java EE components that generate responses, typically HTML pages, to HTTP requests from clients. JSPs embed Java code in an HTML page by using the special delimiters <code>&lt;%</code> and <code>%&gt;</code>. A JSP is compiled to a Java <i>servlet</i>, a Java application in its own right, the first time it is accessed. After that, the generated servlet creates the response.<sup>[69]</sup>
+</p>
+<h3>Swing application</h3>
+
+<p>Swing is a graphical user interface library for the Java SE platform. It is possible to specify a different look and feel through the pluggable look and feel system of Swing. Clones of Windows, GTK+, and Motif are supplied by Sun. Apple also provides an Aqua look and feel for macOS. Where prior implementations of these looks and feels may have been considered lacking, Swing in Java SE 6 addresses this problem by using more native GUI widget drawing routines of the underlying platforms.<sup>[70]</sup>
+</p>
+<h3>JavaFX application</h3>
+
+<p>JavaFX is a software platform for creating and delivering desktop applications, as well as rich web applications that can run across a wide variety of devices. JavaFX is intended to replace Swing as the standard graphical user interface (GUI) library for Java SE, but since JDK 11 JavaFX has not been in the core JDK and instead in a separate module.<sup>[71]</sup> JavaFX has support for desktop computers and web browsers on Microsoft Windows, Linux, and macOS. JavaFX does not have support for native OS look and feels.<sup>[72]</sup>
+</p>
+<h3>Generics</h3>
+
+<p>In 2004, generics were added to the Java language, as part of J2SE 5.0. Prior to the introduction of generics, each variable declaration had to be of a specific type. For container classes, for example, this is a problem because there is no easy way to create a container that accepts only specific types of objects. Either the container operates on all subtypes of a class or interface, usually <code>Object</code>, or a different container class has to be created for each contained class. Generics allow compile-time type checking without having to create many container classes, each containing almost identical code. In addition to enabling more efficient code, certain runtime exceptions are prevented from occurring, by issuing compile-time errors. If Java prevented all runtime type errors (<code>ClassCastException</code>s) from occurring, it would be type safe.
+</p><p>In 2016, the type system of Java was proven unsound in that it is possible to use generics to construct classes and methods that allow assignment of an instance of one class to a variable of another unrelated class. Such code is accepted by the compiler, but fails at run time with a class cast exception.<sup>[73]</sup>
+</p>
+<h2>Criticism</h2>
+
+<p>Criticisms directed at Java include the implementation of generics,<sup>[74]</sup> speed,<sup>[53]</sup> the handling of unsigned numbers,<sup>[75]</sup> the implementation of floating-point arithmetic,<sup>[76]</sup> and a history of security vulnerabilities in the primary Java VM implementation HotSpot.<sup>[77]</sup>
+Developers have criticized the complexity and verbosity of the Java Persistence API (JPA), a standard part of Java EE. This has led to increased adoption of higher-level abstractions like Spring Data JPA, which aims to simplify database operations and reduce boilerplate code. The growing popularity of such frameworks suggests limitations in the standard JPA implementation's ease-of-use for modern Java development.
+</p>
+<h2>Class libraries</h2>
+
+<p>The Java Class Library is the standard library, developed to support application development in Java. It is controlled by Oracle in cooperation with others through the Java Community Process program.<sup>[78]</sup> Companies or individuals participating in this process can influence the design and development of the APIs. This process has been a subject of controversy during the 2010s.<sup>[79]</sup> The class library contains features such as:
+</p>
+<ul><li>The core libraries, which include:
+<ul><li>Input/output (I/O or IO)<sup>[80]</sup> and non-blocking I/O (NIO), or IO/NIO<sup>[81]</sup></li>
+<li>Networking<sup>[82]</sup> (new user agent (HTTP client) since Java 11<sup>[83]</sup>)</li>
+<li>Reflective programming (reflection)</li>
+<li>Concurrent computing (concurrency)<sup>[80]</sup></li>
+<li>Generics</li>
+<li>Scripting, Compiler</li>
+<li>Functional programming (Lambda, streaming)</li>
+<li>Collection libraries that implement data structures such as lists, dictionaries, trees, sets, queues and double-ended queue, or stacks<sup>[84]</sup></li>
+<li>XML Processing (Parsing, Transforming, Validating) libraries</li>
+<li>Security<sup>[85]</sup></li>
+<li>Internationalization and localization libraries<sup>[86]</sup></li></ul></li>
+<li>The integration libraries, which allow the application writer to communicate with external systems. These libraries include:
+<ul><li>The Java Database Connectivity (JDBC) API for database access</li>
+<li>Java Naming and Directory Interface (JNDI) for lookup and discovery</li>
+<li>Java remote method invocation (RMI) and Common Object Request Broker Architecture (CORBA) for distributed application development</li>
+<li>Java Management Extensions (JMX) for managing and monitoring applications</li></ul></li>
+<li>User interface libraries, which include:
+<ul><li>The (heavyweight, or native) Abstract Window Toolkit (AWT), which provides GUI components, the means for laying out those components and the means for handling events from those components</li>
+<li>The (lightweight) Swing libraries, which are built on AWT but provide (non-native) implementations of the AWT widgetry</li>
+<li>APIs for audio capture, processing, and playback</li>
+<li>JavaFX</li></ul></li>
+<li>A platform dependent implementation of the Java virtual machine that is the means by which the bytecodes of the Java libraries and third-party applications are executed</li>
+<li>Plugins, which enable applets to be run in web browsers</li>
+<li>Java Web Start, which allows Java applications to be efficiently distributed to end users across the Internet</li>
+<li>Licensing and documentation</li></ul>
+<h2>Documentation</h2>
+
+<p>Javadoc is a comprehensive documentation system, created by Sun Microsystems. It provides developers with an organized system for documenting their code. Javadoc comments have an extra asterisk at the beginning, i.e. the delimiters are <code>/**</code> and <code>*/</code>, whereas the normal multi-line comments in Java are delimited by <code>/*</code> and <code>*/</code>, and single-line comments start with <code>//</code>.
+</p>
+<h2>Implementations</h2>
+
+
+<p>Oracle Corporation owns the official implementation of the Java SE platform, due to its acquisition of Sun Microsystems on January 27, 2010. This implementation is based on the original implementation of Java by Sun. The Oracle implementation is available for Windows, macOS, Linux, and Solaris. Because Java lacks any formal standardization recognized by Ecma International, ISO/IEC, ANSI, or other third-party standards organizations, the Oracle implementation is the de facto standard.
+</p><p>The Oracle implementation is packaged into two different distributions: The Java Runtime Environment (JRE) which contains the parts of the Java SE platform required to run Java programs and is intended for end users, and the Java Development Kit (JDK), which is intended for software developers and includes development tools such as the Java compiler, Javadoc, Jar, and a debugger. Oracle has also released GraalVM, a high performance Java dynamic compiler and interpreter.
+</p><p>OpenJDK is another Java SE implementation that is licensed under the GNU GPL. The implementation started when Sun began releasing the Java source code under the GPL. As of Java SE 7, OpenJDK is the official Java reference implementation.
+</p><p>The goal of Java is to make all implementations of Java compatible. Historically, Sun's trademark license for usage of the Java brand insists that all implementations be <i>compatible</i>. This resulted in a legal dispute with Microsoft after Sun claimed that the Microsoft implementation did not support Java remote method invocation (RMI) or Java Native Interface (JNI) and had added platform-specific features of their own. Sun sued in 1997, and, in 2001, won a settlement of US$20 million, as well as a court order enforcing the terms of the license from Sun.<sup>[88]</sup> As a result, Microsoft no longer ships Java with Windows.
+</p><p>Platform-independent Java is essential to Java EE, and an even more rigorous validation is required to certify an implementation. This environment enables portable server-side applications.
+</p>
+<h2>Use outside the Java platform</h2>
+<p>The Java programming language requires the presence of a software platform in order for compiled programs to be executed.
+</p><p>Oracle supplies the Java platform for use with Java. The Android SDK is an alternative software platform, used primarily for developing Android applications with its own GUI system.
+</p>
+<h3>Android</h3>
+<p>The Java language is a key pillar in Android, an open source mobile operating system. Although Android, built on the Linux kernel, is written largely in C, the Android SDK uses the Java language as the basis for Android applications but does not use any of its standard GUI, SE, ME or other established Java standards.<sup>[89]</sup> The bytecode language supported by the Android SDK is incompatible with Java bytecode and runs on its own virtual machine, optimized for low-memory devices such as smartphones and tablet computers. Depending on the Android version, the bytecode is either interpreted by the Dalvik virtual machine or compiled into native code by the Android Runtime.
+</p><p>Android does not provide the full Java SE standard library, although the Android SDK does include an independent implementation of a large subset of it. It supports Java 6 and some Java 7 features, offering an implementation compatible with the standard library (Apache Harmony).
+</p>
+<h4>Controversy</h4>
+
+<p>The use of Java-related technology in Android led to a legal dispute between Oracle and Google. On May 7, 2012, a San Francisco jury found that if APIs could be copyrighted, then Google had infringed Oracle's copyrights by the use of Java in Android devices.<sup>[90]</sup> District Judge William Alsup ruled on May 31, 2012, that APIs cannot be copyrighted,<sup>[91]</sup> but this was reversed by the United States Court of Appeals for the Federal Circuit in May 2014.<sup>[92]</sup> On May 26, 2016, the district court decided in favor of Google, ruling the copyright infringement of the Java API in Android constitutes fair use.<sup>[93]</sup> In March 2018, this ruling was overturned by the Appeals Court, which sent down the case of determining the damages to federal court in San Francisco.<sup>[94]</sup>
+Google filed a petition for writ of certiorari with the Supreme Court of the United States in January 2019 to challenge the two rulings that were made by the Appeals Court in Oracle's favor.<sup>[95]</sup> On April 5, 2021, the Court ruled 6–2 in Google's favor, that its use of Java APIs should be considered fair use. However, the court refused to rule on the copyrightability of APIs, choosing instead to determine their ruling by considering Java's API copyrightable "purely for argument's sake."<sup>[96]</sup>
+</p>
+<h2>See also</h2>
+
+
+<ul><li>C#</li>
+<li>C++</li>
+<li>Dalvik, used in old Android versions, replaced by non-JIT Android Runtime</li>
+<li>Java Heterogeneous Distributed Computing</li>
+<li>List of Java APIs</li>
+<li>List of Java frameworks</li>
+<li>List of JVM languages</li>
+<li>List of Java programming books</li>
+<li>List of Java software and tools</li>
+<li>List of Java virtual machines</li>
+<li>Outline of the Java programming language</li>
+<li>Comparison of C# and Java</li>
+<li>Comparison of Java and C++</li>
+<li>Comparison of programming languages</li></ul>
+<h2>References</h2>
+
+<ol>
+<li><b>^</b> Binstock, Andrew (May 20, 2015). "Java's 20 Years of Innovation". <i>Forbes</i>. Archived from the original on March 14, 2016. Retrieved March 18, 2016.
+</li>
+<li><b>^</b> "JDK 25".
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> <sup><i><b>c</b></i></sup> <sup><i><b>d</b></i></sup> Barbara Liskov with John Guttag (2000). <i>Program Development in Java – Abstraction, Specification, and Object-Oriented Design</i>. USA, Addison Wesley. ISBN 978-0-201-65768-5.
+</li>
+<li><b>^</b> Chaudhary, Harry H. (July 28, 2014). "Cracking The Java Programming Interview :: 2000+ Java Interview Que/Ans". Archived from the original on September 29, 2023. Retrieved May 29, 2016.
+</li>
+<li><b>^</b> Java 5.0 added several new language features (the enhanced for loop, autoboxing, varargs and annotations), after they were introduced in the similar (and competing) C# language. [1] Archived March 19, 2011, at the Wayback Machine [2] Archived January 7, 2006, at the Wayback Machine
+</li>
+<li><b>^</b> Gosling, James; McGilton, Henry (May 1996). "The Java Language Environment". Archived from the original on May 6, 2014. Retrieved May 6, 2014.
+</li>
+<li><b>^</b> Gosling, James; Joy, Bill; Steele, Guy; Bracha, Gilad. "The Java Language Specification, 2nd Edition". Archived from the original on August 5, 2011. Retrieved February 8, 2008.
+</li>
+<li><b>^</b> "The A-Z of Programming Languages: Modula-3". Computerworld. Archived from the original on January 5, 2009. Retrieved June 9, 2010.
+</li>
+<li><b>^</b> Niklaus Wirth stated on a number of public occasions, e.g. in a lecture at the Polytechnic Museum, Moscow in September 2005 (several independent first-hand accounts in Russian exist, e.g. one with an audio recording: Filippova, Elena (September 22, 2005). "Niklaus Wirth's lecture at the Polytechnic Museum in Moscow". Archived from the original on December 1, 2020. Retrieved November 20, 2011.), that the Sun Java design team licensed the Oberon compiler sources a number of years prior to the release of Java and examined it: a (relative) compactness, type safety, garbage collection, no multiple inheritance for classes –  all these key overall design features are shared by Java and Oberon.
+</li>
+<li><b>^</b> Patrick Naughton cites Objective-C as a strong influence on the design of the Java programming language, stating that notable direct derivatives include Java interfaces (derived from Objective-C's protocol) and primitive wrapper classes. [3] Archived July 13, 2011, at the Wayback Machine
+</li>
+<li><b>^</b> TechMetrix Research (1999). "History of Java" (PDF). <i>Java Application Servers Report</i>. Archived from the original (PDF) on December 29, 2010. The project went ahead under the name <i>green</i> and the language was based on an old model of UCSD Pascal, which makes it possible to generate interpretive code.
+</li>
+<li><b>^</b> "A Conversation with James Gosling". <i>ACM Queue</i>. Vol. 2, no. 5. Association for Computing Machinery. August 31, 2004. Archived from the original on July 16, 2015. Retrieved June 9, 2010.
+</li>
+<li><b>^</b> The Java Language Team. About Microsoft's 'Delegates' (White Paper). JavaSoft, Sun Microsystems, Inc. Archived from the original on June 27, 2012. In the summer of 1996, Sun was designing the precursor to what is now the event model of the AWT and the JavaBeans component architecture. Borland contributed greatly to this process. We looked very carefully at Delphi Object Pascal and built a working prototype of bound method references in order to understand their interaction with the Java programming language and its APIs.
+</li>
+<li><b>^</b> "Chapel spec (Acknowledgements)" (PDF). Cray Inc. October 1, 2015. Archived (PDF) from the original on February 5, 2016. Retrieved January 14, 2016.
+</li>
+<li><b>^</b> "Gambas Documentation Introduction". Gambas Website. Archived from the original on October 9, 2017. Retrieved October 9, 2017.
+</li>
+<li><b>^</b> "Facebook Q&amp;A: Hack brings static typing to PHP world". <i>InfoWorld</i>. March 26, 2014. Archived from the original on February 13, 2015. Retrieved January 11, 2015.
+</li>
+<li><b>^</b> "Write once, run anywhere?". Computer Weekly. May 2, 2002. Archived from the original on August 13, 2021. Retrieved July 27, 2009.
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> <sup><i><b>c</b></i></sup> "1.2 Design Goals of the Java Programming Language". Oracle. January 1, 1999. Archived from the original on January 23, 2013. Retrieved January 14, 2013.
+</li>
+<li><b>^</b> Melanson, Mike (August 9, 2022). "Don't call it a comeback: Why Java is still champ". <i>GitHub</i>. Archived from the original on August 25, 2023. Retrieved October 15, 2023.
+</li>
+<li><b>^</b> "The top programming languages". <i>The State of the Octoverse</i>. GitHub. Archived from the original on August 2, 2023. Retrieved October 15, 2023.
+</li>
+<li><b>^</b> McMillan, Robert (August 1, 2013). "Is Java Losing Its Mojo?". <i>Wired</i>. Archived from the original on February 15, 2017. Retrieved October 15, 2023.
+</li>
+<li><b>^</b> Byous, Jon (c. 1998). "Java technology: The early years". <i>Sun Developer Network</i>. Sun Microsystems. Archived from the original on April 20, 2005. Retrieved April 22, 2005.
+</li>
+<li><b>^</b> Object-oriented programming "The History of Java Technology". <i>Sun Developer Network</i>. c. 1995. Archived from the original on February 10, 2010. Retrieved April 30, 2010.
+</li>
+<li><b>^</b> Murphy, Kieron (October 4, 1996). "So why did they decide to call it Java?". <i>JavaWorld</i>. Archived from the original on July 13, 2020. Retrieved July 13, 2020.
+</li>
+<li><b>^</b> Kabutz, Heinz; <i>Once Upon an Oak</i> Archived April 13, 2007, at the Wayback Machine. Artima. Retrieved April 29, 2007.
+</li>
+<li><b>^</b> "JAVASOFT SHIPS JAVA 1.0". Archived from the original on March 10, 2007. Retrieved May 13, 2018.
+</li>
+<li><b>^</b> <i>Object-oriented Programming with Java: Essentials and Applications</i>. Tata McGraw-Hill Education. p. 34.
+</li>
+<li><b>^</b> "JSG – Java Study Group". <i>open-std.org</i>. Archived from the original on August 25, 2006. Retrieved August 2, 2006.
+</li>
+<li><b>^</b> "Why Java Was – Not – Standardized Twice" (PDF). Archived (PDF) from the original on January 13, 2014. Retrieved June 3, 2018.
+</li>
+<li><b>^</b> "What is ECMA—and why Microsoft cares". <i>ZDNet</i>. Archived from the original on May 6, 2014. Retrieved May 6, 2014.
+</li>
+<li><b>^</b> "Java Community Process website". Jcp.org. May 24, 2010. Archived from the original on August 8, 2006. Retrieved June 9, 2010.
+</li>
+<li><b>^</b> "JAVAONE: Sun – The bulk of Java is open sourced". GrnLight.net. Archived from the original on May 27, 2014. Retrieved May 26, 2014.
+</li>
+<li><b>^</b> "Sun's Evolving Role as Java Evangelist". O'Reilly Media. Archived from the original on September 15, 2010. Retrieved August 2, 2009.
+</li>
+<li><b>^</b> "Oracle and Java". <i>oracle.com</i>. Oracle Corporation. Archived from the original on January 31, 2010. Retrieved August 23, 2010. Oracle has been a leading and substantive supporter of Java since its emergence in 1995 and takes on the new role as steward of Java technology with a relentless commitment to fostering a community of participation and transparency.
+</li>
+<li><b>^</b> Gosling, James (April 9, 2010). "Time to move on..." <i>On a New Road</i>. Archived from the original on November 5, 2010. Retrieved November 16, 2011.
+</li>
+<li><b>^</b> Topic, Dalibor. "Moving to a Plugin-Free Web". Archived from the original on March 16, 2016. Retrieved March 15, 2016.
+</li>
+<li><b>^</b> "Learn About Java Technology". Oracle. Archived from the original on November 24, 2011. Retrieved November 21, 2011.
+</li>
+<li><b>^</b> "Why should I uninstall older versions of Java from my system?". Oracle. Archived from the original on February 12, 2018. Retrieved September 24, 2021.
+</li>
+<li><b>^</b> "Oracle Java SE Support Roadmap". Oracle. September 13, 2021. Archived from the original on September 19, 2021. Retrieved September 18, 2021.
+</li>
+<li><b>^</b> "Temurin™ Support; Adoptium". <i>adoptium.net</i>. Archived from the original on March 29, 2024. Retrieved March 29, 2024.
+</li>
+<li><b>^</b> "JAVASOFT SHIPS JAVA 1.0". <i>sun.com</i>. Archived from the original on March 10, 2007. Retrieved February 5, 2008.
+</li>
+<li><b>^</b> Chander, Sharat. "Introducing Java SE 11". <i>oracle.com</i>. Archived from the original on September 26, 2018. Retrieved September 26, 2018.
+</li>
+<li><b>^</b> Chander, Sharat (September 15, 2020). "The Arrival of Java 15!". Oracle. Archived from the original on September 16, 2020. Retrieved September 15, 2020.
+</li>
+<li><b>^</b> "JDK 21". <i>openjdk.org</i>. Archived from the original on September 20, 2023. Retrieved September 20, 2023.
+</li>
+<li><b>^</b> "JDK 24".
+</li>
+<li><b>^</b> "JDK 25".
+</li>
+<li><b>^</b> "Java Card Overview". <i>Oracle Technology Network</i>. Oracle. Archived from the original on January 7, 2015. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Java Platform, Micro Edition (Java ME)". <i>Oracle Technology Network</i>. Oracle. Archived from the original on January 4, 2015. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Java SE". <i>Oracle Technology Network</i>. Oracle. Archived from the original on December 24, 2014. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Java Platform, Enterprise Edition (Java EE)". <i>Oracle Technology Network</i>. Oracle. Archived from the original on December 17, 2014. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Deep Dive Into the New Java JIT Compiler – Graal | Baeldung". <i>www.baeldung.com</i>. August 6, 2021. Archived from the original on October 28, 2021. Retrieved October 13, 2021.
+</li>
+<li><b>^</b> "Is the JVM (Java Virtual Machine) platform dependent or platform independent? What is the advantage of using the JVM, and having Java be a translated language?". Programmer Interview. Archived from the original on January 19, 2015. Retrieved January 19, 2015.
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> Jelovic, Dejan. "Why Java will always be slower than C++". Archived from the original on February 11, 2008. Retrieved February 15, 2008.
+</li>
+<li><b>^</b> Hundt, Robert. "Loop Recognition in C++/Java/Go/Scala" (PDF). Archived (PDF) from the original on November 16, 2011. Retrieved July 12, 2012.
+</li>
+<li><b>^</b> "Symantec's Just-In-Time Java Compiler To Be Integrated into Sun JDK 1.1". Archived from the original on June 28, 2010. Retrieved August 1, 2009.
+</li>
+<li><b>^</b> Salcic, Zoran; Park, Heejong; Teich, Jürgen; Malik, Avinash; Nadeem, Muhammad (July 22, 2017). "Noc-HMP: A Heterogeneous Multicore Processor for Embedded Systems Designed in SystemJ". <i>ACM Transactions on Design Automation of Electronic Systems</i>. <b>22</b> (4): 73. doi:10.1145/3073416. ISSN 1084-4309. S2CID 11150290.
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> <sup><i><b>c</b></i></sup> Bloch 2018, p. 26-28, §Item 7: Eliminate obsolete object references.
+</li>
+<li><b>^</b> "NullPointerException". Oracle. Archived from the original on May 6, 2014. Retrieved May 6, 2014.
+</li>
+<li><b>^</b> "Exceptions in Java". Artima.com. Archived from the original on January 21, 2009. Retrieved August 10, 2010.
+</li>
+<li><b>^</b> "System (Java SE 25 and JDK 25)". <i>Oracle</i>. Retrieved January 14, 2026.
+</li>
+<li><b>^</b> Walter, A. (2010). Towards Certification of Java Applications for Safety Critical Projects. <i>Proceedings of Embedded Real-Time Software and Systems, ERTS2</i>, 1-7.
+</li>
+<li><b>^</b> "Java HotSpot™ Virtual Machine Performance Enhancements". Oracle.com. Archived from the original on May 29, 2017. Retrieved April 26, 2017.
+</li>
+<li><b>^</b> "Operator Overloading (C# vs Java)". <i>C# for Java Developers</i>. Microsoft. Archived from the original on January 7, 2015. Retrieved December 10, 2014.
+</li>
+<li><b>^</b> "Multiple Inheritance of State, Implementation, and Type". <i>The Java Tutorials</i>. Oracle. Archived from the original on November 9, 2014. Retrieved December 10, 2014.
+</li>
+<li><b>^</b> Krill, Paul (September 16, 2025). "JDK 25: The new features in Java 25". <i>InfoWorld</i>. Retrieved October 9, 2025.
+</li>
+<li><b>^</b> Pressler, Ron; Laskey, Jim; Bierman, Gavin (July 11, 2025). "JEP 512: Compact Source Files and Instance Main Methods". <i>OpenJDK</i>. Retrieved October 9, 2025.
+</li>
+<li><b>^</b> "Deprecated APIs, Features, and Options". Oracle. Archived from the original on June 19, 2019. Retrieved May 31, 2019.
+</li>
+<li><b>^</b> "Applet (Java Platform SE 7)". <i>Docs</i>. Oracle. Archived from the original on August 2, 2020. Retrieved May 1, 2020.
+</li>
+<li><b>^</b> "What Is a JSP Page? - The Java EE 5 Tutorial". <i>docs.oracle.com</i>. Archived from the original on August 2, 2020. Retrieved May 1, 2020.
+</li>
+<li><b>^</b> "Trail: Creating a GUI With JFC/Swing (The Java Tutorials)". <i>docs.oracle.com</i>. Archived from the original on April 29, 2020. Retrieved May 1, 2020.
+</li>
+<li><b>^</b> "Removed from JDK 11, JavaFX 11 arrives as a standalone module". <i>InfoWorld</i>. September 20, 2018. Archived from the original on October 14, 2020. Retrieved October 13, 2020.
+</li>
+<li><b>^</b> "Getting Started with JavaFX: Hello World, JavaFX Style". <i>JavaFX 2 Tutorials and Documentation</i>. Oracle. Archived from the original on August 2, 2020. Retrieved May 1, 2020.
+</li>
+<li><b>^</b> "Java and Scala's Type Systems are Unsound" (PDF). Archived (PDF) from the original on November 28, 2016. Retrieved February 20, 2017.
+</li>
+<li><b>^</b> Arnold, Ken (June 27, 2005). "Generics Considered Harmful". java.net. Archived from the original on October 10, 2007. Retrieved September 10, 2015.
+</li>
+<li><b>^</b> Owens, Sean R. "Java and unsigned int, unsigned short, unsigned byte, unsigned long, etc. (Or rather, the lack thereof)". Archived from the original on February 20, 2009. Retrieved July 4, 2011.
+</li>
+<li><b>^</b> Kahan, William (March 1, 1998). "How Java's Floating-Point Hurts Everyone Everywhere – ACM 1998 Workshop on Java (Stanford)" (PDF). Electrical Engineering &amp; Computer Science, University of California at Berkeley. Archived (PDF) from the original on September 5, 2012. Retrieved June 4, 2011.
+</li>
+<li><b>^</b> "Have you checked the Java?". Archived from the original on September 21, 2012. Retrieved December 23, 2011.
+</li>
+<li><b>^</b> Cadenhead, Rogers (November 20, 2017), <i>Understanding How Java Programs Work</i>, archived from the original on August 13, 2021, retrieved March 26, 2019
+</li>
+<li><b>^</b> Woolf, Nicky (May 26, 2016). "Google wins six-year legal battle with Oracle over Android code copyright". <i>The Guardian</i>. ISSN 0261-3077. Archived from the original on March 26, 2019. Retrieved March 26, 2019.
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> Bloch 2018, pp. 1–4, § 1 Introduction.
+</li>
+<li><b>^</b> "java.nio (Java Platform SE 8)". <i>docs.oracle.com</i>.
+</li>
+<li><b>^</b> "Java Networking". <i>docs.oracle.com</i>.
+</li>
+<li><b>^</b> "HttpClient (Java SE 11 &amp; JDK 11)". <i>docs.oracle.com</i>.
+</li>
+<li><b>^</b> "Collections Framework Overview". <i>Java Documentation</i>. Oracle. Archived from the original on December 31, 2014. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Java Security Overview". <i>Java Documentation</i>. Oracle. Archived from the original on January 3, 2015. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "Trail: Internationalization". <i>The Java Tutorials</i>. Oracle. Archived from the original on December 31, 2014. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> "How to Write Doc Comments for the Javadoc Tool". <i>Oracle Technology Network</i>. Oracle. Archived from the original on December 18, 2014. Retrieved December 18, 2014.
+</li>
+<li><b>^</b> Niccolai, James (January 24, 2001). "Sun, Microsoft settle Java lawsuit". <i>JavaWorld</i>. IDG News Service. Archived from the original on July 14, 2020. Retrieved July 13, 2020.
+</li>
+<li><b>^</b> van Gurp, Jilles (November 13, 2007). "Google Android: Initial Impressions and Criticism". <i>Javalobby</i>. Archived from the original on August 28, 2008. Retrieved March 7, 2009. <i>Frankly, I don't understand why Google intends to ignore the vast amount of existing implementation out there. It seems like a bad case of "not invented here" to me. Ultimately, this will slow adoption. There are already too many Java platforms for the mobile world and this is yet another one</i>
+</li>
+<li><b>^</b> Mullin, Joe (May 7, 2012). "Google guilty of infringement in Oracle trial; future legal headaches loom". <i>Law &amp; Disorder</i>. Ars Technica. Archived from the original on May 8, 2012. Retrieved May 8, 2012.
+</li>
+<li><b>^</b> Mullin, Joe (May 31, 2012). "Google wins crucial API ruling, Oracle's case decimated". <i>Ars Technica</i>. Archived from the original on March 12, 2017. Retrieved June 1, 2012.
+</li>
+<li><b>^</b> Rosenblatt, Seth (May 9, 2014). "Court sides with Oracle over Android in Java patent appeal". <i>CNET</i>. Archived from the original on May 10, 2014. Retrieved May 10, 2014.
+</li>
+<li><b>^</b> Mullin, Joe (May 26, 2016). "Google beats Oracle—Android makes "fair use" of Java APIs". <i>Ars Technica</i>. Archived from the original on January 20, 2017. Retrieved May 26, 2016.
+</li>
+<li><b>^</b> Farivar, Cyrus (March 27, 2018). ""Google's use of the Java API packages was not fair," appeals court rules". <i>Ars Technica</i>. Archived from the original on September 24, 2019. Retrieved August 6, 2019.
+</li>
+<li><b>^</b> Lee, Timothy (April 23, 2019). "Google asks Supreme Court to overrule disastrous ruling on API copyrights". <i>Ars Technica</i>. Archived from the original on April 23, 2019. Retrieved April 23, 2019.
+</li>
+<li><b>^</b> "<i>Google LLC v. Oracle America, Inc</i> 593 U. S. ____ (2021)" (PDF). Archived (PDF) from the original on April 5, 2021. Retrieved April 6, 2021.
+</li>
+</ol>
+<h2>Bibliography</h2>
+
+<ul><li>Bloch, Joshua (2018). <i>Effective Java: Programming Language Guide</i> (Third ed.). Addison-Wesley. ISBN 978-0-13-468599-1.</li>
+<li>Gosling, James; Joy, Bill; Steele, Guy L. Jr.; Bracha, Gilad (2005). <i>The Java Language Specification</i> (3rd ed.). Addison-Wesley. ISBN 0-321-24678-0. Archived from the original on February 14, 2012. Retrieved February 8, 2019.</li>
+<li>Gosling, James; Joy, Bill; Steele, Guy; Bracha, Gilad; Buckley, Alex (2014). <i>The Java® Language Specification</i> (PDF) (Java SE 8 ed.). Archived (PDF) from the original on October 21, 2014. Retrieved November 18, 2014.</li>
+<li>Lindholm, Tim; Yellin, Frank (1999). <i>The Java Virtual Machine Specification</i> (2nd ed.). Addison-Wesley. ISBN 0-201-43294-3. Archived from the original on September 25, 2011. Retrieved February 8, 2019.</li></ul>
+
+<h2>External links</h2>
+
+
+<b>Java</b>  at Wikipedia's sister projects
+
+<ul><li><a href="https://en.wikipedia.org/wiki/File:Wiktionary-logo-v2.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/en/thumb/0/06/Wiktionary-logo-v2.svg/60px-Wiktionary-logo-v2.svg.png" srcset="//upload.wikimedia.org/wikipedia/en/thumb/0/06/Wiktionary-logo-v2.svg/60px-Wiktionary-logo-v2.svg.png 1.5x"></a>Definitions from Wiktionary</li><li><a href="https://en.wikipedia.org/wiki/File:Commons-logo.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/40px-Commons-logo.svg.png" srcset="//upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/40px-Commons-logo.svg.png 1.5x"></a>Media from Commons</li><li><a href="https://en.wikipedia.org/wiki/File:Wikiquote-logo.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Wikiquote-logo.svg/60px-Wikiquote-logo.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Wikiquote-logo.svg/60px-Wikiquote-logo.svg.png 2x"></a>Quotations from Wikiquote</li><li><a href="https://en.wikipedia.org/wiki/File:Wikibooks-logo.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Wikibooks-logo.svg/60px-Wikibooks-logo.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Wikibooks-logo.svg/60px-Wikibooks-logo.svg.png 1.5x"></a>Textbooks from Wikibooks</li><li><a href="https://en.wikipedia.org/wiki/File:Wikiversity_logo_2017.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Wikiversity_logo_2017.svg/60px-Wikiversity_logo_2017.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Wikiversity_logo_2017.svg/60px-Wikiversity_logo_2017.svg.png 1.5x"></a>Resources from Wikiversity</li><li><a href="https://en.wikipedia.org/wiki/File:Wikidata-logo.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Wikidata-logo.svg/60px-Wikidata-logo.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Wikidata-logo.svg/60px-Wikidata-logo.svg.png 1.5x"></a>Data from Wikidata</li></ul>
+
+
+
+<a href="https://en.wikipedia.org/wiki/File:Wikiversity_logo_2017.svg"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Wikiversity_logo_2017.svg/60px-Wikiversity_logo_2017.svg.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Wikiversity_logo_2017.svg/60px-Wikiversity_logo_2017.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Wikiversity_logo_2017.svg/120px-Wikiversity_logo_2017.svg.png 2x"></a>
+Wikiversity has learning resources about <i><b>Java Platform, Enterprise Edition/Java EE Tutorial</b></i>
+
+<ul><li>Java Software, Oracle</li>
+<li>OpenJDK, Oracle</li>
+<li>JDK builds, Adoptium</li>
+<li>Java for developers, Dev.java</li>
+<li>News and views from members of the Java team at Oracle </li>
+<li>OpenJDK Wiki</li>
+<li>Java Community Process</li></ul>
+
+
+
+
+
+
+
+
+
+
+

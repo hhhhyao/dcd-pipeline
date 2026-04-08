@@ -1,0 +1,91 @@
+---
+title: Jesse Jackson, civil rights leader and US presidential hopeful, dies at 84
+date: "2026-02-17T09:45:09.447Z"
+description: Jesse Jackson was an eloquent Baptist minister raised in the segregated South who became a close associate of Martin Luther King Jr and twice ran for the Democratic presidential nomination.
+url: "https://www.reuters.com/world/us/jesse-jackson-civil-rights-leader-us-presidential-hopeful-dies-84-nbc-news-2026-02-17/"
+code_source: "https://github.com/agi-otw/dcd_pipeline"
+---
+
+# Jesse Jackson, civil rights leader and US presidential hopeful, dies at 84
+
+By Will Dunham
+
+February 17, 2026 9:45 AM UTC
+
+![Reverend Jesse Jackson addresses the World Conference Against Racism inDurban.](https://www.reuters.com/resizer/v2/JFPLXTBKH5PG5FVUQMRR7B5BYM.jpg?auth=255e6667fcedf33748cc0c75af42d67b4d83a57efa9c30d30c172772982a3adf&width=1200&quality=80)
+
+Reverend Jesse Jackson addresses a Non-Governmental Organisation debate on racism in the media at the World Conference Against Racism (WCAR) September 5, 2001. REUTERS/Mike Hutchings/File Photo Purchase Licensing Rights
+
+Summary
+
+- Jackson was inspirational orator and civil rights champion
+- He sought 1984 and 1988 Democratic presidential nomination
+
+Washington, Feb 17 (Reuters) - Charismatic U.S. civil rights leader Jesse Jackson, an eloquent Baptist minister raised in the segregated South who became a close associate of Martin Luther King Jr and twice ran for the Democratic presidential nomination, has died at age 84, his family said in a statement on Tuesday.
+
+"Our father was a servant leader - not only to our family, but to the oppressed, the voiceless, and the overlooked around the world," the Jackson family said.
+
+Jackson, an inspirational orator and long-time Chicagoan, was diagnosed with Parkinson's disease in 2017.
+
+His death comes at a time when the administration of Donald Trump has targeted U.S. institutions, from museums to monuments to national parks, to remove what the president calls "anti-American" ideology, leading to the dismantling of slavery exhibits, the restoration of Confederate statues and other moves that civil rights advocates say could reverse decades of social progress.
+
+The media-savvy Jackson advocated for the rights of Black Americans and other marginalized communities dating back to the turbulent civil rights movement of the 1960s spearheaded by his mentor King, a Baptist minister and towering social activist.
+
+Jackson weathered a spate of controversies but remained America's preeminent civil rights figure for decades.
+
+He ran for the Democratic presidential nomination in 1984 and 1988, attracting Black voters and many white liberals in mounting unexpectedly strong campaigns but fell short of becoming the first Black major party White House nominee. Ultimately, he never held elective office.
+
+Jackson founded the Chicago-based civil rights groups Operation PUSH and the National Rainbow Coalition and served as Democratic President Bill Clinton's special envoy to Africa in the 1990s. Jackson also was instrumental in securing the release of a number of Americans and others held overseas in places including Syria, Cuba, Iraq and Serbia.
+
+## MESMERIZING ORATORY
+
+Jackson pursued his political ambitions in the 1980s, relying on his mesmerizing oratory. It was not until fellow Chicagoan Barack Obama's election as president in 2008 that a Black candidate came as close to securing a major party presidential nomination as Jackson.
+
+In 1984, Jackson won 3.3 million votes in Democratic nominating contests, about 18% of those cast, and finished third behind eventual nominee Walter Mondale and Gary Hart in the race for the right to face Republican incumbent Ronald Reagan. His candidacy lost momentum after it became public that Jackson had privately called Jewish people "Hymies" and New York "Hymietown."
+
+In 1988, Jackson was a more polished and mainstream candidate, coming in a close second in the Democratic race to face Republican George H.W. Bush. Jackson gave eventual Democratic nominee Michael Dukakis a run for his money, winning 11 state primaries and caucuses, including several in the South, and amassing 6.8 million votes in nominating contests, or 29%.
+
+Jackson cast himself as a barrier-breaker for people of color, the impoverished and the powerless. He electrified the 1988 Democratic convention with a speech telling his life story and calling on Americans to find common ground.
+
+"America is not a blanket woven from one thread, one color, one cloth," Jackson told the delegates in Atlanta.
+
+"Wherever you are tonight, you can make it. Hold your head high, stick your chest out. You can make it. It gets dark sometimes, but the morning comes. Don't you surrender. Suffering breeds character, character breeds faith. In the end, faith will not disappoint," Jackson added.
+
+Jackson announced in 2017 at age 76 that he had been diagnosed with Parkinson's disease, a movement disorder marked by trembling, stiffness and poor balance and coordination, after experiencing symptoms for three years.
+
+## SOUTHERN ROOTS
+
+Born on Oct. 8, 1941, in Greenville, South Carolina, his mother was a 16-year-old high school student and his father was a 33-year-old married man who lived next door. His mother later married another man who adopted Jackson. He grew up amid the Jim Crow era in the United States, the often brutally enforced web of racist laws and practices born in the South to subjugate Black Americans.
+
+Jackson earned a football scholarship at the University of Illinois, but transferred to a historically Black college because he said he experienced discrimination. He began his civil rights activism while a student at North Carolina Agricultural & Technical College, and was arrested when he sought to enter a "whites-only" public library in South Carolina.
+
+He attended Chicago Theological Seminary and was ordained a Baptist minister in 1968 despite failing to graduate.
+
+Jackson became a lieutenant to civil rights leader Martin Luther King Jr and sometimes traveled with him. On the day King was assassinated by a white man named James Earl Ray on the balcony of the Lorraine Motel in Memphis, Jackson was just a floor below. Jackson infuriated some of King's other associates when he told reporters he had cradled the dying King in his arms and was the last person to whom King spoke, an account they disputed.
+
+King, who headed the Southern Christian Leadership Conference, had installed the energetic Jackson in a leadership role to help create economic opportunities in Black communities.
+
+Jackson later broke with King's successor at the SCLC, Ralph Abernathy, and set up his own civil rights organization in Chicago, Operation PUSH, in the early 1970s. In 1984, Jackson founded the National Rainbow Coalition, whose broader civil rights mission also included women's rights and gay rights, and the two organizations merged in 1996. He stepped down as the president of Rainbow-PUSH Coalition in 2023 after more than five decades of leadership and activism.
+
+He met his wife, Jacqueline Brown, during college. They married in 1962 and had five children. His son Jesse Jackson Jr. was elected to the U.S. House of Representatives but resigned and served prison time on a fraud conviction. Jackson also had a daughter out of wedlock in 1999 with a woman who worked at his civil rights groups, which became a scandal.
+
+Jackson was known for personal diplomacy. After he secured the 1984 release by Syria of U.S. naval aviator Robert Goodman Jr., President Ronald Reagan invited Jackson to the White House and expressed gratitude for the "mission of mercy." Jackson met in 1990 with Iraqi leader Saddam Hussein to gain the release of hundreds of Americans and others after Iraq's invasion of Kuwait. He won the 1984 release of dozens of Cuban and American prisoners from Cuban jails and the release of three U.S. airmen held in Serbia in 1999.
+
+He hosted a weekly show on CNN from 1992 to 2000, pressed corporations for Black economic empowerment, and received the highest U.S. civilian honor, the Presidential Medal of Freedom from Clinton in 2000.
+
+Jackson continued his activism later in life, condemning the police killing of George Floyd and other Black Americans in 2020 amid the global racial justice movement.
+
+## Read Next
+
+- United States
+  How some Democrats are using scripture to try to reach Christian voters in US midterms
+
+- United States
+  New Mexico approves comprehensive probe of Epstein’s Zorro Ranch
+
+- United States
+  Goldman, Nasdaq CEOs to headline Mar-a-Lago crypto ‘forum’ hosted by Don Jr. and Eric Trump
+
+- US health regulators to consider safety status of processed ingredients, RFK Jr. says
+
+- LA Mayor Bass calls on LA28 chair Wasserman to resign
