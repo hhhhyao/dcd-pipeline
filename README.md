@@ -87,10 +87,4 @@ python3 -m dcd_cli.cli pipe validate pipelines/<family>/<pipe_name> --host "$DCD
 
 如果本地环境里的认证变量仍使用 `DCD_TOKEN`，而某些 `dcd-cli` 文档或命令示例使用 `DCD_SECRET`，请在当前 shell 中显式映射后再执行相关命令。
 
-## 约定
-
-- 仓库内统一使用 `dcd` 命名。
-- active pipe 名称不再带 `_lance` 后缀；`.lance` 仅表示数据集存储格式，不属于 pipe 身份的一部分。
-- `skills/` 是 agent 工作流的事实来源。
-
 如果你是 agent / Codex / Cursor，请优先阅读 [AGENTS.md](./AGENTS.md)。
