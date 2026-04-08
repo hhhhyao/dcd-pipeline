@@ -77,8 +77,6 @@ Each deployable pipe should stay self-contained and usually include:
 Follow these rules when editing or creating a pipe:
 
 - Keep pipe names valid Python package names: lowercase letters, digits, and underscores; start with a letter.
-- Keep committed naming `dcd`-only.
-- Do not add `_lance` to canonical active pipe names. `.lance` is a storage format, not a pipe identity.
 - Keep runtime logic inside the pipe package, not in repo-root helper glue.
 - Update `manifest.yaml`, implementation, tests, and local pipe docs together when behavior changes.
 
