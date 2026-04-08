@@ -22,6 +22,7 @@ dist/
 # IDE/system
 .idea/
 .vscode/
+.cursor/
 .DS_Store
 Thumbs.db
 # Python
