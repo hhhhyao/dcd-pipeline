@@ -1,2 +1,0 @@
-pylance>=0.20
-pyarrow

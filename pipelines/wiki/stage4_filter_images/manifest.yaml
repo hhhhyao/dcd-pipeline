@@ -1,0 +1,24 @@
+name: stage4_filter_images
+author: yao.lewei1@huawei.com
+description: >-
+  Filter stage3 OpenAI image blocks by image_labels width and height metadata
+  only, without tokenization or splitting.
+operation: map
+network: false
+input_format: [openai]
+input_fields:
+  text: [id, data, info]
+  image_labels: [id, info]
+output_format: openai
+output_fields:
+  text: [data, info]
+config:
+  - name: min_image_width
+    type: int
+    default: 0
+    label: Drop images narrower than this many pixels
+  - name: min_image_height
+    type: int
+    default: 0
+    label: Drop images shorter than this many pixels
+tags: [wiki, openai, image, filter, multimodal]

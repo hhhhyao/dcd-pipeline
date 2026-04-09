@@ -1,4 +1,4 @@
-name: stage3_parse_html
+name: stage2_parse_html
 description: Parse raw HTML into cleaned markdown and simplified HTML with agent in the loop
 author: yao.lewei@huawei.com
 operation: map

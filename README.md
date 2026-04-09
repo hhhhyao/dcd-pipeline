@@ -1,90 +1,141 @@
 # dcd_pipeline
 
-`dcd_pipeline` 是一个用于开发、测试和维护 DCD pipeline 的仓库。
+`dcd_pipeline` is a workspace for developing, testing, and maintaining DCD pipelines.
 
-这个仓库面向通用的 pipeline 开发场景，而不是绑定某一条具体业务线。当前仓库里已经有一个可参考的示例目录是 `pipelines/wiki/`，可以作为目录组织和测试方式的参考示例。
+The repo is not tied to a single business domain. The checked-in `pipelines/wiki/` tree is a
+working example of how a pipeline family can be organized, tested, and run locally.
 
-## 仓库结构
+## Quick Start
 
-- `pipelines/`
-  统一存放可部署的 pipeline 代码。推荐按 `pipelines/<family>/<pipe_name>/` 组织，每个 pipe 保持自包含。
-- `reference_repo/`
-  通过 git submodule 管理的参考仓库，目前包括 `dcd` 和 `dcd-cli`。
-- `skills/`
-  面向 agent / Cursor / Codex 的技能文档，是自动化开发流程的事实来源。
+Use this path if you just cloned the repo and want to get to a runnable setup quickly.
 
-## Pipe 目录建议
-
-一个可部署的 pipe 通常应至少包含这些文件：
-
-- `manifest.yaml`
-- `__init__.py` 或 `main.py`
-- `requirements.txt`
-- `README.md`
-- `tests/`
-
-其中：
-
-- `manifest.yaml` 定义 pipe 名称、作者、operation、输入输出字段、config、资源需求等元数据。
-- 入口模块实现与 `operation` 对应的函数，例如 `map()`、`filter()`、`expand()`、`reduce()` 或 `ingest()`。
-- `tests/` 应该可以在单个 pipe 目录上下文中独立运行，不依赖仓库根目录绝对路径。
-
-## 参考仓库
-
-首次拉取后请初始化 submodule：
+### 1. Initialize submodules
 
 ```bash
 git submodule update --init --recursive
 ```
 
-当前参考仓库：
+This repo depends on:
 
 - `reference_repo/dcd`
 - `reference_repo/dcd-cli`
 
-开发 pipe 时，`reference_repo/dcd-cli` 是最重要的接口与约定来源。
+### 2. Create a virtual environment
 
-## 配置 `.server_info`
+`dcd-cli` requires Python 3.13+.
 
-仓库中提供了 [`.server_info.example`](./.server_info.example) 模板文件，其中保留了非敏感的主机和端口信息。
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
 
-使用时请先复制：
+### 3. Install `dcd-cli`
+
+Follow the upstream installation instructions in `reference_repo/dcd-cli/README.md`.
+
+Example:
+
+```bash
+pip install git+https://github.com/dataclawdev/dcd-cli.git
+```
+
+### 4. Create local config
 
 ```bash
 cp .server_info.example .server_info
+source .server_info
 ```
 
-然后手动填写你自己的账号信息，例如：
+This repo uses `DCD_TOKEN` in `.server_info`. Some `dcd-cli` docs and examples still use
+`DCD_SECRET`, so map it when needed:
 
-- `DCD_TOKEN`
-- `DCD_AUTHOR`
-- `DCD_LOGIN_EMAIL`
-- `DCD_LOGIN_PASSWORD`
+```bash
+export DCD_SECRET="$DCD_TOKEN"
+```
 
-`.server_info` 默认不进入 git，不要提交真实账号、密码或 token。
+Do not commit real tokens, passwords, or personal credentials.
 
-## 开发与验证
-
-建议把每个 pipe 当作独立包来开发和验证。
-
-### 1. 运行对应测试
+### 5. Run a pipe test
 
 ```bash
 pytest -q pipelines/<family>/<pipe_name>/tests
 ```
 
-例如：
+Example:
 
 ```bash
-pytest -q pipelines/wiki/stage3_parse_html/tests
+pytest -q pipelines/wiki/stage2_parse_html/tests
 ```
 
-### 2. 使用 dcd-cli 校验 pipe
+### 6. Validate a pipe
 
 ```bash
-python3 -m dcd_cli.cli pipe validate pipelines/<family>/<pipe_name> --host "$DCD_HOST"
+dcd pipe validate pipelines/<family>/<pipe_name> --host "$DCD_HOST"
 ```
 
-如果本地环境里的认证变量仍使用 `DCD_TOKEN`，而某些 `dcd-cli` 文档或命令示例使用 `DCD_SECRET`，请在当前 shell 中显式映射后再执行相关命令。
+Example:
 
-如果你是 agent / Codex / Cursor，请优先阅读 [AGENTS.md](./AGENTS.md)。
+```bash
+dcd pipe validate pipelines/wiki/stage2_parse_html --host "$DCD_HOST"
+```
+
+## What To Read Next
+
+- For pipe authoring and runtime semantics, start with `reference_repo/dcd-cli/docs/pipe.md`.
+- For CLI behavior such as `register`, `update`, `fetch`, and `validate`, see
+  `reference_repo/dcd-cli/docs/cli.md`.
+- For text format conventions such as `html`, `markdown`, `json`, and `openai`, see
+  `reference_repo/dcd-cli/docs/text-formats.md`.
+- For local viewer work, start with `reference_repo/dcd/README.md` and
+  `reference_repo/dcd/docs/webapp.md`.
+- For agent-specific execution rules in this repo, see `AGENTS.md`.
+
+## Repo Layout
+
+- `pipelines/`
+  Deployable pipeline packages. Preferred layout:
+  `pipelines/<family>/<pipe_name>/`
+- `reference_repo/`
+  Upstream reference repos managed as git submodules
+- `skills/`
+  Agent-oriented workflow docs
+- `workspace/`
+  Repo-local area for temporary datasets, logs, local viewer state, screenshots, and other
+  developer-only runtime artifacts
+
+`workspace/` is usually not tracked by git and may not exist in a fresh clone. Create it only
+when needed:
+
+```bash
+mkdir -p workspace
+```
+
+## Pipe Package Expectations
+
+Each deployable pipe should usually stay self-contained and include:
+
+- `manifest.yaml`
+- `__init__.py` or `main.py`
+- `requirements.txt`
+- `README.md`
+- `tests/`
+
+In practice:
+
+- `manifest.yaml` defines the pipe metadata and runtime config schema.
+- The entry module implements the function matching the declared operation, such as
+  `map()`, `filter()`, `expand()`, `reduce()`, or `ingest()`.
+- Tests should run in isolation without depending on developer-specific absolute paths.
+- When behavior changes, update implementation, `manifest.yaml`, tests, and the pipe-local
+  `README.md` together.
+
+## Local DCD Viewer
+
+The local browser UI lives in `reference_repo/dcd`, not in `dcd-cli`.
+
+Keep in mind:
+
+- the active DCD server determines which dataset directory is visible in the UI
+- files under `workspace/` are local developer artifacts, not automatic live UI config
+- for a standard agent workflow around the local server, see `skills/dcd-local-server/SKILL.md`

@@ -1,72 +1,85 @@
 # AGENTS.md
 
-## Project Overview
+## Purpose
 
-`dcd_pipeline` is a repository for developing, testing, and maintaining DCD pipelines.
+This file is for agents working in `dcd_pipeline`.
 
-Treat this repo as a general pipeline-development workspace. The checked-in `pipelines/wiki/` tree is a useful example, not the only valid pattern or business domain.
+Use it for repository-specific rules, source-of-truth priorities, and execution constraints.
+For developer onboarding and quickstart steps, see `README.md`.
 
-## Read These First
+## Startup Checklist
 
-When you work on a pipe, use `reference_repo/dcd-cli` as the primary source of truth for package structure, manifest semantics, runtime expectations, and validation.
+Before doing implementation, validation, or local server work:
 
-Recommended reading order:
-
-1. `reference_repo/dcd-cli/docs/pipe.md`
-   Authoritative pipe authoring guide: layout, manifest fields, operations, config, resources, network, Python version, runtime sandbox, volumes, and testing concepts.
-2. `reference_repo/dcd-cli/docs/cli.md`
-   CLI behavior for `dcd pipe register`, `update`, `fetch`, and `validate`.
-3. `reference_repo/dcd-cli/docs/text-formats.md`
-   Use this whenever a pipe reads or writes text formats such as `html`, `markdown`, `json`, or `openai`.
-4. `reference_repo/dcd-cli/README.md`
-   Quick reference for package shape, `PipeContext`, manifest examples, and helper utilities.
-5. `reference_repo/dcd-cli/pipe-demos/*/README.md`
-   Concrete examples for ingest and transform pipes. Prefer demos that match the operation or modality you are implementing.
-6. `reference_repo/dcd-cli/skills/user/update-pipe/SKILL.md`
-   Useful agent-oriented checklist, but treat the docs above as the normative interface reference.
-
-## Environment
-
-- Use a dedicated Python virtual environment.
-- Initialize submodules before doing validation or implementation work:
+1. Initialize submodules:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-- Reference repos live in:
-  - `reference_repo/dcd`
-  - `reference_repo/dcd-cli`
-- Local secrets belong in `.server_info`, created from `.server_info.example`.
-- Never commit real tokens, passwords, or personal credentials.
+2. Confirm the upstream reference repos exist:
 
-## Config and Auth
+- `reference_repo/dcd`
+- `reference_repo/dcd-cli`
 
-This repo's local template uses `DCD_TOKEN` in `.server_info`.
+3. If a command depends on local host or credentials, read `.server_info` when present.
 
-Some `dcd-cli` docs and commands still refer to `DCD_SECRET`. When you need CLI compatibility, export the value explicitly in your shell before running commands that expect `DCD_SECRET`.
-
-Example:
+4. This repo's local template uses `DCD_TOKEN`. If a CLI command or doc expects
+   `DCD_SECRET`, map it first:
 
 ```bash
-export DCD_HOST="..."
 export DCD_SECRET="$DCD_TOKEN"
 ```
 
-Do not rewrite committed docs just to preserve both naming schemes unless the task explicitly requires compatibility aliases.
+5. Do not assume `workspace/` already exists. Create it only when needed.
 
-## Directory Map
+## Normative References
+
+When working on pipes, treat `reference_repo/dcd-cli` as the primary source of truth for:
+
+- package structure
+- manifest semantics
+- runtime expectations
+- validation behavior
+
+Read in this order when relevant:
+
+1. `reference_repo/dcd-cli/docs/pipe.md`
+2. `reference_repo/dcd-cli/docs/cli.md`
+3. `reference_repo/dcd-cli/docs/text-formats.md`
+4. `reference_repo/dcd-cli/README.md`
+5. `reference_repo/dcd-cli/pipe-demos/*/README.md`
+6. `reference_repo/dcd-cli/skills/user/update-pipe/SKILL.md`
+
+If repo-local habits conflict with those docs, follow the upstream docs.
+
+## Repo Rules
+
+### Structure
 
 - `pipelines/`
-  Deployable pipeline packages. Preferred layout is `pipelines/<family>/<pipe_name>/`.
+  Deployable pipeline packages. Preferred layout:
+  `pipelines/<family>/<pipe_name>/`
 - `skills/`
-  Source-of-truth skill docs for agent workflows in this repo.
+  Repo-local agent workflow docs
 - `reference_repo/`
-  Submodule-managed upstream references.
+  Upstream reference repos managed as submodules
+- `workspace/`
+  Repo-local runtime area for temporary or machine-specific artifacts
 
-## Pipe Package Rules
+### Upstream Repos
 
-Each deployable pipe should stay self-contained and usually include:
+- Treat `reference_repo/dcd` and `reference_repo/dcd-cli` as upstream references.
+- Prefer wrapper scripts, environment variables, local work dirs, symlinks, and repo-local
+  helper docs over editing upstream code.
+- Do not modify code under `reference_repo/dcd` or `reference_repo/dcd-cli` unless the user
+  explicitly asks for upstream source changes.
+- If a local setup problem can be solved without upstream edits, solve it at the runtime or
+  configuration layer instead.
+
+## Pipe Rules
+
+Each deployable pipe should usually stay self-contained and include:
 
 - `manifest.yaml`
 - `__init__.py` or `main.py`
@@ -74,29 +87,51 @@ Each deployable pipe should stay self-contained and usually include:
 - `README.md`
 - `tests/`
 
-Follow these rules when editing or creating a pipe:
+When editing or creating a pipe:
 
-- Keep pipe names valid Python package names: lowercase letters, digits, and underscores; start with a letter.
+- Keep pipe names valid Python package names: lowercase letters, digits, and underscores,
+  starting with a letter.
 - Keep runtime logic inside the pipe package, not in repo-root helper glue.
-- Update `manifest.yaml`, implementation, tests, and local pipe docs together when behavior changes.
+- Update `manifest.yaml`, implementation, tests, and pipe-local docs together when behavior
+  changes.
+- Make the pipe-local `README.md` describe the real input, output, config, and behavior.
 
-## Testing Rules
+## Runtime Rules
 
-Tests for an active pipe should be runnable in isolation.
+Normative detail lives in `reference_repo/dcd-cli/docs/pipe.md` under the runtime,
+sandbox, volume, and network sections. For server-side execution detail, also see:
+
+- `reference_repo/dcd/docs/manual/pipe.md`
+- `reference_repo/dcd/docs/design/job-lifecycle.md`
+
+Write pipe code with these assumptions:
+
+- Treat the filesystem as allow-listed. Rely on pipe code, the venv, input datasets,
+  `ctx.output_dir` for ingest, `$HOME` (`/home/pipe`), `/tmp`, and paths from `ctx.volumes`.
+- Do not hard-code arbitrary host paths.
+- Network is off unless the manifest sets `network: true`.
+- Transform pipes should return data from the entry function instead of depending on writes to
+  undocumented locations.
+- Some local development setups may not enforce strict isolation, but pipe code should still be
+  written as if only the allow-listed mounts exist.
+
+## Testing and Validation
+
+Tests for an active pipe should run in isolation.
 
 Prefer:
 
 - package-local imports
 - fixture files under the pipe's own `tests/fixtures/`
-- commands scoped to a single pipe directory
+- commands scoped to the specific pipe under test
 
 Avoid:
 
 - repo-root absolute paths
-- test setup that depends on a specific developer machine layout
+- test setup that depends on one developer machine layout
 - hidden coupling to unrelated pipeline families
 
-Typical command:
+Typical test command:
 
 ```bash
 pytest -q pipelines/<family>/<pipe_name>/tests
@@ -105,30 +140,59 @@ pytest -q pipelines/<family>/<pipe_name>/tests
 Example:
 
 ```bash
-pytest -q pipelines/wiki/stage3_parse_html/tests
+pytest -q pipelines/wiki/stage2_parse_html/tests
 ```
 
-## Validation Workflow
-
-For pipe-level validation, use `dcd-cli` against the specific directory you changed.
+For pipe-level validation, use `dcd-cli` against the specific directory you changed:
 
 ```bash
-python3 -m dcd_cli.cli pipe validate pipelines/<family>/<pipe_name> --host "$DCD_HOST"
+dcd pipe validate pipelines/<family>/<pipe_name> --host "$DCD_HOST"
 ```
 
-If you are preparing a new version, also review the corresponding upload/update flow in `reference_repo/dcd-cli/docs/cli.md` before changing manifests or release notes.
+If a suitable `dcd` command is not available in the active environment, falling back to
+`python3 -m dcd_cli.cli ...` is acceptable.
 
-## Documentation Expectations
+If you are preparing a new version, review the upload and update flow in
+`reference_repo/dcd-cli/docs/cli.md` before changing manifests or release notes.
 
-- Root `README.md` is human-facing and should stay concise, general, and high-signal.
-- Root `AGENTS.md` is agent-facing and should stay procedural, implementation-oriented, and repo-specific.
-- `skills/` contains the authoritative agent workflows for this repo.
-- Pipeline-local `README.md` files should describe the pipe's actual input/output, config, and behavior.
+## Remote Server References
 
-## Style and Safety
+Use these docs when deploying pipes to a host or reasoning about server-side execution.
 
+`dcd-cli`
+
+- `reference_repo/dcd-cli/docs/cli.md`
+- `reference_repo/dcd-cli/docs/pipe.md`
+
+`dcd`
+
+- `reference_repo/dcd/docs/api.md`
+- `reference_repo/dcd/docs/design/job-lifecycle.md`
+- `reference_repo/dcd/docs/design/remote-runner.md`
+- `reference_repo/dcd/docs/design/runner.md`
+
+## Local Web UI
+
+The browser UI ships with `reference_repo/dcd` (`dataclawdev`), not with `dcd-cli`.
+
+Use these references:
+
+- `reference_repo/dcd/README.md`
+- `reference_repo/dcd/docs/webapp.md`
+- `skills/dcd-local-server/SKILL.md` when the task is about starting, verifying, or
+  troubleshooting the local viewer
+
+For local viewer work in this repo:
+
+- keep local runtime state under `workspace/`
+- ensure requested datasets are visible from the dataset directory used by the active local DCD
+  server
+- do not assume auxiliary files under `workspace/` control the live UI
+
+## Safety and Style
+
+- Avoid printing secrets in commands, logs, tests, fixtures, or docs.
 - Prefer small, composable Python helpers and explicit names.
 - Preserve ASCII unless a file already requires non-ASCII.
-- Avoid printing secrets in commands, logs, test fixtures, or docs.
 - If local config keys need to change, preserve user values when possible.
 - When a requirement is ambiguous, prefer the `dcd-cli` docs over project-specific habit.

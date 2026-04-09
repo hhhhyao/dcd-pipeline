@@ -1,12 +1,55 @@
 name: stage1_html_localize_image_ids
 author: yao.lewei1@huawei.com
-description: Temporarily localize HTML image URLs using existing per-row image IDs
-operation: map
+description: Rewrite HTML image refs and deduplicate a mounted multi-table Lance dataset
+operation: ingest
 network: false
-input_format: [html]
-input_fields:
-  text: [id, data, info, tags]
-output_format: html
 output_fields:
-  text: [data, info]
-tags: [wiki, html, image, lance, temporary]
+  text: [id, info, data, tags]
+  image: [id, image_bytes, sha256]
+  image_labels: [id, info, data, tags]
+tags: [wiki, transform, html, image, lance]
+resources:
+  cpus: 16
+  memory_mb: 131072
+  timeout_per_item: 14400
+config:
+  - name: cache_dir
+    type: str
+    default: ""
+    label: Optional cache directory override
+  - name: batch_size
+    type: int
+    default: 1024
+    label: Read batch size
+  - name: write_flush_rows
+    type: int
+    default: 8192
+    label: Flush rewritten rows after this many buffered rows
+  - name: progress_every
+    type: int
+    default: 5000
+    label: Emit progress after this many processed rows
+  - name: extractor
+    type: str
+    default: plugins.wikimedia_production:extract_img_urls_from_html
+    label: Callable spec for HTML image URL extraction
+  - name: normalizer
+    type: str
+    default: plugins.wikimedia_production:normalize_image_url
+    label: Callable spec for image URL normalization
+  - name: formatter
+    type: str
+    default: plugins.wikimedia_production:format_image_ref
+    label: Callable spec for HTML image ref formatting
+  - name: rewriter
+    type: str
+    default: plugins.wikimedia_production:rewrite_html
+    label: Callable spec for HTML rewriting
+  - name: compact_tables
+    type: str
+    default: "text,image_labels,images"
+    label: Comma-separated list of tables to compact
+  - name: overwrite
+    type: bool
+    default: true
+    label: Overwrite output directory if it already exists

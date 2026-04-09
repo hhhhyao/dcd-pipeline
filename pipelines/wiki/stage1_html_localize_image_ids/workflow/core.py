@@ -1,0 +1,431 @@
+"""Main pipeline orchestration."""
+
+from __future__ import annotations
+
+import json
+import logging
+import shlex
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Sequence
+
+import lance
+
+from ops.cache_io import JsonlShardWriter
+from ops.lance_ops import (
+    StageProgress,
+    append_rows_to_lance_dataset,
+    compact_selected_tables,
+    fetch_image_label_infos_by_ids,
+    load_callable,
+    load_order_cache,
+    load_rowids_cache,
+    normalize_compact_tables,
+    prepare_output_dir,
+    scan_images_caches,
+    scan_image_label_caches,
+)
+from workflow.dedup import dedup_image_labels_dataset, dedup_images_dataset
+from workflow.html_rewrite import (
+    RewriterFn,
+    build_html_rewrite_plan,
+    build_local_url_map,
+    dedupe_preserve_order,
+    json_dumps,
+)
+from workflow.metadata import (
+    discover_repo_metadata,
+    discover_runtime_user,
+    write_dataset_yaml,
+    write_run_info_yaml,
+)
+
+
+LOG = logging.getLogger(__name__)
+
+DEFAULT_INPUT_DIR = "/mnt-c526/lancedb/html/wiki_20260324_zh_fig_backfill"
+DEFAULT_OUTPUT_DIR = "/cache/wiki_20260324_zh_fig_html_replace_image_url_and_dedup_id"
+DEFAULT_TEXT_DB_NAME = "text.lance"
+DEFAULT_IMAGES_DB_NAME = "images.lance"
+DEFAULT_IMAGE_LABELS_DB_NAME = "image_labels.lance"
+DEFAULT_BATCH_SIZE = 1024
+DEFAULT_WRITE_FLUSH_ROWS = 8192
+DEFAULT_PROGRESS_EVERY = 5000
+DEFAULT_EXTRACTOR = "plugins.wikimedia_production:extract_img_urls_from_html"
+DEFAULT_NORMALIZER = "plugins.wikimedia_production:normalize_image_url"
+DEFAULT_FORMATTER = "plugins.wikimedia_production:format_image_ref"
+DEFAULT_REWRITER = "plugins.wikimedia_production:rewrite_html"
+DEFAULT_IMAGES_IMAGE_ID_ORDER_CACHE_NAME = "images_image_id_order.arrow"
+DEFAULT_IMAGE_LABELS_IMAGE_ID_ROWIDS_CACHE_NAME = "image_labels_image_id_rowids.arrow"
+DEFAULT_IMAGE_LABELS_IMAGE_ID_ORDER_CACHE_NAME = "image_labels_image_id_order.arrow"
+DEFAULT_MISSING_JSONL_NAME = "image_url_missing.jsonl"
+DEFAULT_WARNING_JSONL_NAME = "image_id_unmatched_warning.jsonl"
+
+
+ExtractorFn = Callable[[str], list[str]]
+NormalizerFn = Callable[[str], str]
+FormatterFn = Callable[[str], str]
+
+
+@dataclass
+class PipelineArgs:
+    input_dir: str
+    output_dir: str
+    text_db_name: str
+    images_db_name: str
+    image_labels_db_name: str
+    cache_dir: str | None
+    batch_size: int
+    write_flush_rows: int
+    progress_every: int
+    extractor: str
+    normalizer: str
+    formatter: str
+    rewriter: str
+    compact_tables: list[str] | None
+    overwrite: bool
+
+
+def _parse_info(info_raw: str) -> dict[str, Any]:
+    try:
+        info = json.loads(info_raw or "{}")
+    except json.JSONDecodeError:
+        info = {}
+    return info if isinstance(info, dict) else {}
+
+
+def rewrite_text_dataset(
+    text_path: Path,
+    image_labels_path: Path,
+    text_output_path: Path,
+    *,
+    extract_urls: ExtractorFn,
+    normalize_url: NormalizerFn,
+    format_image_ref: FormatterFn,
+    rewrite_html: RewriterFn,
+    batch_size: int,
+    write_flush_rows: int,
+    progress_every: int,
+    missing_writer: JsonlShardWriter,
+    warning_writer: JsonlShardWriter,
+) -> dict[str, int]:
+    """Rewrite HTML image URLs in text.lance."""
+    text_ds = lance.dataset(str(text_path))
+    image_labels_ds = lance.dataset(str(image_labels_path))
+    schema = text_ds.schema
+    counters = {
+        "rows": 0,
+        "rewritten_rows": 0,
+        "rewritten_images": 0,
+        "missing_urls": 0,
+        "unmatched_image_ids": 0,
+    }
+    progress = StageProgress(
+        name="text_rewrite",
+        total_rows=int(text_ds.count_rows()),
+        progress_every=progress_every,
+        counters=counters,
+    )
+
+    pending_rows: list[dict[str, Any]] = []
+    scanner = text_ds.scanner(
+        columns=["id", "info", "data", "tags"],
+        batch_size=batch_size,
+        batch_readahead=1,
+        fragment_readahead=1,
+        scan_in_order=True,
+    )
+    for batch in scanner.to_batches():
+        batch_rows = batch.to_pylist()
+        image_ids_for_batch: list[str] = []
+        parsed_rows: list[dict[str, Any]] = []
+        for row in batch_rows:
+            info = _parse_info(str(row.get("info") or "{}"))
+            image_ids = dedupe_preserve_order(str(item) for item in (info.get("image_ids") or []) if item)
+            parsed_rows.append({
+                "id": str(row["id"]),
+                "info": info,
+                "data": str(row.get("data") or ""),
+                "tags": row.get("tags") or [],
+                "image_ids": image_ids,
+            })
+            image_ids_for_batch.extend(image_ids)
+
+        label_rows_by_id_raw = fetch_image_label_infos_by_ids(
+            image_labels_ds,
+            dedupe_preserve_order(image_ids_for_batch),
+            batch_size=batch_size,
+        )
+        label_infos_by_id: dict[str, list[dict[str, Any]]] = {}
+        for image_id, rows_for_id in label_rows_by_id_raw.items():
+            parsed_infos: list[dict[str, Any]] = []
+            for raw_row in rows_for_id:
+                parsed_infos.append(_parse_info(str(raw_row.get("info") or "{}")))
+            label_infos_by_id[image_id] = parsed_infos
+
+        for row in parsed_rows:
+            counters["rows"] += 1
+            progress.advance()
+            normalized_to_image_id, raw_urls_by_id, normalized_urls_by_id = build_local_url_map(
+                row["image_ids"],
+                label_infos_by_id,
+                normalize_url,
+            )
+            rewrite_plan = build_html_rewrite_plan(
+                row["data"],
+                extract_urls=extract_urls,
+                normalize_url=normalize_url,
+                format_image_ref=format_image_ref,
+                normalized_to_image_id=normalized_to_image_id,
+            )
+            rewritten_html = rewrite_html(row["data"], rewrite_plan["replacements_by_raw_url"])
+            missing_urls = rewrite_plan["missing_urls"]
+            matched_normalized_urls = rewrite_plan["matched_normalized_urls"]
+            used_image_ids = rewrite_plan["used_image_ids"]
+            if rewritten_html != row["data"]:
+                counters["rewritten_rows"] += 1
+            counters["rewritten_images"] += len(used_image_ids)
+
+            html_url = str(row["info"].get("url") or row["info"].get("final_url") or "")
+            for missing in missing_urls:
+                counters["missing_urls"] += 1
+                missing_writer.write({
+                    "text_id": row["id"],
+                    "html_url": html_url,
+                    **missing,
+                })
+
+            for image_id in row["image_ids"]:
+                candidate_norms = normalized_urls_by_id.get(image_id, [])
+                if not candidate_norms:
+                    counters["unmatched_image_ids"] += 1
+                    warning_writer.write({
+                        "type": "image_id_no_candidate_urls",
+                        "text_id": row["id"],
+                        "html_url": html_url,
+                        "image_id": image_id,
+                        "candidate_urls_raw": raw_urls_by_id.get(image_id, []),
+                        "candidate_urls_normalized": candidate_norms,
+                    })
+                    LOG.warning("text_id=%s image_id=%s has no candidate image-label URLs", row["id"], image_id)
+                    continue
+                if not any(norm in matched_normalized_urls for norm in candidate_norms):
+                    counters["unmatched_image_ids"] += 1
+                    warning_writer.write({
+                        "type": "image_id_not_matched_to_html_url",
+                        "text_id": row["id"],
+                        "html_url": html_url,
+                        "image_id": image_id,
+                        "candidate_urls_raw": raw_urls_by_id.get(image_id, []),
+                        "candidate_urls_normalized": candidate_norms,
+                    })
+                    LOG.warning("text_id=%s image_id=%s did not match any HTML image URL", row["id"], image_id)
+
+            row["info"]["image_ids"] = row["image_ids"]
+            pending_rows.append({
+                "id": row["id"],
+                "info": json_dumps(row["info"]),
+                "data": rewritten_html,
+                "tags": row["tags"],
+            })
+            if len(pending_rows) >= write_flush_rows:
+                append_rows_to_lance_dataset(pending_rows, schema, text_output_path)
+                pending_rows = []
+
+    if pending_rows:
+        append_rows_to_lance_dataset(pending_rows, schema, text_output_path)
+    progress.report(final=True)
+    return counters
+
+
+def run_pipeline(args: PipelineArgs, argv: Sequence[str] | None = None) -> dict[str, Any]:
+    """Run the full rewrite + dedup + compact pipeline."""
+    extract_urls = load_callable(args.extractor)
+    normalize_url = load_callable(args.normalizer)
+    format_image_ref = load_callable(args.formatter)
+    rewrite_html = load_callable(args.rewriter)
+
+    input_dir = Path(args.input_dir).expanduser().resolve()
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    cache_dir = Path(args.cache_dir).expanduser().resolve() if args.cache_dir else output_dir / "cache"
+    text_source_path = input_dir / args.text_db_name
+    images_source_path = input_dir / args.images_db_name
+    image_labels_source_path = input_dir / args.image_labels_db_name
+    text_output_path = output_dir / args.text_db_name
+    images_output_path = output_dir / args.images_db_name
+    image_labels_output_path = output_dir / args.image_labels_db_name
+    images_order_cache_path = cache_dir / DEFAULT_IMAGES_IMAGE_ID_ORDER_CACHE_NAME
+    image_labels_rowids_cache_path = cache_dir / DEFAULT_IMAGE_LABELS_IMAGE_ID_ROWIDS_CACHE_NAME
+    image_labels_order_cache_path = cache_dir / DEFAULT_IMAGE_LABELS_IMAGE_ID_ORDER_CACHE_NAME
+    missing_jsonl_path = output_dir / DEFAULT_MISSING_JSONL_NAME
+    warning_jsonl_path = output_dir / DEFAULT_WARNING_JSONL_NAME
+    compact_tables = normalize_compact_tables(args.compact_tables)
+
+    for path in (text_source_path, images_source_path, image_labels_source_path):
+        if not path.exists():
+            raise FileNotFoundError(f"Dataset path not found: {path}")
+
+    prepare_output_dir(output_dir, args.overwrite)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    timings = {
+        "rewrite_text_seconds": 0.0,
+        "scan_images_cache_seconds": 0.0,
+        "scan_image_labels_cache_seconds": 0.0,
+        "dedup_images_seconds": 0.0,
+        "dedup_image_labels_seconds": 0.0,
+        "compact_seconds": 0.0,
+        "write_metadata_seconds": 0.0,
+        "total_seconds": 0.0,
+    }
+    total_t0 = time.perf_counter()
+
+    missing_writer = JsonlShardWriter(cache_dir, "missing", flush_rows=args.write_flush_rows)
+    warning_writer = JsonlShardWriter(cache_dir, "warnings", flush_rows=args.write_flush_rows)
+
+    stage_t0 = time.perf_counter()
+    text_stats = rewrite_text_dataset(
+        text_source_path,
+        image_labels_source_path,
+        text_output_path,
+        extract_urls=extract_urls,
+        normalize_url=normalize_url,
+        format_image_ref=format_image_ref,
+        rewrite_html=rewrite_html,
+        batch_size=args.batch_size,
+        write_flush_rows=args.write_flush_rows,
+        progress_every=args.progress_every,
+        missing_writer=missing_writer,
+        warning_writer=warning_writer,
+    )
+    timings["rewrite_text_seconds"] = time.perf_counter() - stage_t0
+
+    stage_t0 = time.perf_counter()
+    images_cache_stats = scan_images_caches(
+        images_source_path,
+        order_cache_path=images_order_cache_path,
+        batch_size=args.batch_size,
+        progress_every=args.progress_every,
+    )
+    timings["scan_images_cache_seconds"] = time.perf_counter() - stage_t0
+    images_ordered_rows = load_order_cache(images_order_cache_path)
+    images_first_row_id_by_image_id = {
+        str(row["image_id"]): int(row["first_row_id"])
+        for row in images_ordered_rows
+    }
+
+    stage_t0 = time.perf_counter()
+    image_stats = dedup_images_dataset(
+        images_source_path,
+        images_output_path,
+        first_row_id_by_image_id=images_first_row_id_by_image_id,
+        batch_size=args.batch_size,
+        write_flush_rows=args.write_flush_rows,
+        progress_every=args.progress_every,
+        warning_writer=warning_writer,
+    )
+    timings["dedup_images_seconds"] = time.perf_counter() - stage_t0
+
+    stage_t0 = time.perf_counter()
+    image_labels_cache_stats = scan_image_label_caches(
+        image_labels_source_path,
+        rowids_cache_path=image_labels_rowids_cache_path,
+        order_cache_path=image_labels_order_cache_path,
+        batch_size=args.batch_size,
+        progress_every=args.progress_every,
+    )
+    timings["scan_image_labels_cache_seconds"] = time.perf_counter() - stage_t0
+    row_ids_by_image_id = load_rowids_cache(image_labels_rowids_cache_path)
+    ordered_rows = load_order_cache(image_labels_order_cache_path)
+    ordered_image_ids = [str(row["image_id"]) for row in ordered_rows]
+
+    stage_t0 = time.perf_counter()
+    image_label_stats = dedup_image_labels_dataset(
+        image_labels_source_path,
+        image_labels_output_path,
+        row_ids_by_image_id=row_ids_by_image_id,
+        ordered_image_ids=ordered_image_ids,
+        batch_size=args.batch_size,
+        write_flush_rows=args.write_flush_rows,
+        progress_every=args.progress_every,
+        warning_writer=warning_writer,
+    )
+    timings["dedup_image_labels_seconds"] = time.perf_counter() - stage_t0
+
+    missing_count = missing_writer.finalize(missing_jsonl_path)
+    warning_count = warning_writer.finalize(warning_jsonl_path)
+
+    stage_t0 = time.perf_counter()
+    compact_selected_tables(output_dir, compact_tables)
+    timings["compact_seconds"] = time.perf_counter() - stage_t0
+
+    stage_t0 = time.perf_counter()
+    repo_metadata = discover_repo_metadata(Path(__file__).resolve())
+    command = shlex.join([sys.executable, str((Path(__file__).parent / "main.py").resolve()), *(argv or sys.argv[1:])])
+    owner = discover_runtime_user()
+    text_ds = lance.dataset(str(text_output_path))
+    images_ds = lance.dataset(str(images_output_path))
+    image_labels_ds = lance.dataset(str(image_labels_output_path))
+    write_dataset_yaml(
+        output_dir / "dataset.yaml",
+        dataset_name=output_dir.name,
+        description=f"Dataset with rewritten HTML image refs and deduplicated image tables for {input_dir.name}.",
+        owner=owner,
+        source_dataset_name=input_dir.name,
+        text_rows=int(text_ds.count_rows()),
+        text_fields=list(text_ds.schema.names),
+        image_rows=int(images_ds.count_rows()),
+        image_fields=list(images_ds.schema.names),
+        image_label_rows=int(image_labels_ds.count_rows()),
+        image_label_fields=list(image_labels_ds.schema.names),
+        source_root=input_dir,
+        text_source_path=text_source_path,
+        images_source_path=images_source_path,
+        image_labels_source_path=image_labels_source_path,
+        output_dir=output_dir,
+        missing_jsonl_path=missing_jsonl_path,
+        warning_jsonl_path=warning_jsonl_path,
+        command=command,
+        extractor_spec=args.extractor,
+        normalizer_spec=args.normalizer,
+        formatter_spec=args.formatter,
+        rewriter_spec=args.rewriter,
+        repo_metadata=repo_metadata,
+    )
+    timings["write_metadata_seconds"] = time.perf_counter() - stage_t0
+    timings["total_seconds"] = time.perf_counter() - total_t0
+    write_run_info_yaml(
+        output_dir / "run_info.yaml",
+        source_root=input_dir,
+        text_source_path=text_source_path,
+        images_source_path=images_source_path,
+        image_labels_source_path=image_labels_source_path,
+        output_dir=output_dir,
+        text_output_path=text_output_path,
+        images_output_path=images_output_path,
+        image_labels_output_path=image_labels_output_path,
+        missing_jsonl_path=missing_jsonl_path,
+        warning_jsonl_path=warning_jsonl_path,
+        command=command,
+        extractor_spec=args.extractor,
+        normalizer_spec=args.normalizer,
+        formatter_spec=args.formatter,
+        rewriter_spec=args.rewriter,
+        compact_tables=compact_tables,
+        repo_metadata=repo_metadata,
+        timings=timings,
+    )
+
+    return {
+        "images_cache_stats": images_cache_stats,
+        "image_labels_cache_stats": image_labels_cache_stats,
+        "text_stats": text_stats,
+        "image_stats": image_stats,
+        "image_label_stats": image_label_stats,
+        "missing_count": missing_count,
+        "warning_count": warning_count,
+        "compact_tables": compact_tables,
+        "timings": timings,
+    }

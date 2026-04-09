@@ -16,6 +16,13 @@ The pipe entrypoint is `ingest(ctx)`, and it writes:
 - `images.lance`
 - `image_labels.lance`
 
+Current Stage-0 behavior mirrors the raw-dump reference ingest:
+
+- article IDs are `sha256(html)`
+- image IDs are `sha256(image_bytes)`
+- HTML stays in raw remote-URL form for the next rewrite stage
+- duplicate image/image_label rows are preserved here and deduplicated in Stage 1
+
 Runtime config:
 
 - `source_dir`: directory containing `part*.jsonl` and `part*.tar`

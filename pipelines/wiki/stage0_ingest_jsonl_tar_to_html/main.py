@@ -243,7 +243,7 @@ def _resolve_image_bytes(
     image_file: str,
     part_name: str,
     image_store: dict[str, bytes],
-) -> tuple[str, bytes] | None:
+) -> bytes | None:
     normalized = image_file.removeprefix("images/")
     candidates = (
         image_file,
@@ -253,7 +253,7 @@ def _resolve_image_bytes(
     for cid in candidates:
         raw = image_store.get(cid)
         if raw is not None:
-            return cid, raw
+            return raw
     return None
 
 
@@ -297,29 +297,24 @@ def run_streaming(
     pairs = _find_pairs(src_dir)
     line_counts = [_count_non_empty_lines(jf) for jf, _ in pairs]
     total_articles = sum(line_counts)
-    id_width = max(5, len(str(max(total_articles - 1, 0))))
-
     dst_dir.mkdir(parents=True, exist_ok=True)
     text_lance = dst_dir / "text.lance"
     images_lance = dst_dir / "images.lance"
     image_labels_lance = dst_dir / "image_labels.lance"
 
-    seen_img_ids: set[str] = set()
     text_written = 0
     images_written = 0
     t0 = time.perf_counter()
 
     log.info(
-        "Start: %d parts, %d articles total, id_width=%d, log_interval=%d",
-        len(pairs), total_articles, id_width, log_interval,
+        "Start: %d parts, %d articles total, log_interval=%d",
+        len(pairs), total_articles, log_interval,
     )
 
     for part_idx, ((jf, tf), part_total) in enumerate(zip(pairs, line_counts), start=1):
         part_name = tf.stem
         part_t0 = time.perf_counter()
         image_store = _load_part_images(tf)
-        available_ids = set(image_store.keys())
-
         log.info(
             "Part %d/%d: %s (%d lines), loaded %d tar images in %s",
             part_idx, len(pairs), jf.name, part_total, len(image_store),
@@ -355,35 +350,24 @@ def run_streaming(
                 raw_tags = meta.get("tags", [])
                 tags = list(raw_tags) if isinstance(raw_tags, list) else []
 
-                article_id = str(text_written + processed_in_part - 1).zfill(id_width)
+                article_id = hashlib.sha256(html_data.encode("utf-8")).hexdigest()
                 article_images = entry.get("images", [])
                 image_ids_for_article: list[str] = []
-
-                # Used only when rewrite_html_images() is enabled:
-                # img_url_to_id: dict[str, str] = {}
 
                 for img_meta in article_images:
                     image_file = str(img_meta.get("image_file", ""))
                     if not image_file:
                         continue
-                    resolved = _resolve_image_bytes(image_file, part_name, image_store)
-                    if not resolved:
+                    raw_bytes = _resolve_image_bytes(image_file, part_name, image_store)
+                    if raw_bytes is None:
                         continue
-                    image_id, raw_bytes = resolved
-
-                    # Used only when rewrite_html_images() is enabled:
-                    # image_url = str(img_meta.get("image_url", ""))
-                    # if image_url:
-                    #     img_url_to_id[normalize_url(image_url)] = image_id
+                    image_id = hashlib.sha256(raw_bytes).hexdigest()
 
                     image_ids_for_article.append(image_id)
-                    if image_id in seen_img_ids:
-                        continue
-                    seen_img_ids.add(image_id)
 
                     img_ids.append(image_id)
                     img_bytes_list.append(raw_bytes)
-                    img_sha256_list.append(hashlib.sha256(raw_bytes).hexdigest())
+                    img_sha256_list.append(image_id)
 
                     img_info = build_image_info(
                         img_meta,
@@ -392,16 +376,8 @@ def run_streaming(
 
                     imgdata_ids.append(image_id)
                     imgdata_infos.append(json.dumps(img_info, ensure_ascii=False))
-                    imgdata_datas.append(str(img_meta.get("caption_text", "")))
+                    imgdata_datas.append("{}")
                     imgdata_tags.append([])
-
-                # Keep original remote image URLs for now.
-                # html_data = rewrite_html_images(
-                #     html_data,
-                #     img_url_to_id,
-                #     available_ids,
-                # )
-                _ = available_ids
 
                 info = build_text_info(
                     entry,

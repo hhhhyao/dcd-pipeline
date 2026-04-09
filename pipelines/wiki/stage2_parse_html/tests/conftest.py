@@ -18,7 +18,7 @@ if PIPE_PARENT_REL not in sys.path:
     sys.path.insert(0, PIPE_PARENT_REL)
 
 if "parse_html" not in sys.modules:
-    sys.modules["parse_html"] = importlib.import_module("stage3_parse_html")
+    sys.modules["parse_html"] = importlib.import_module("stage2_parse_html")
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 

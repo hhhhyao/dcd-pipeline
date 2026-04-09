@@ -5,7 +5,6 @@ import os
 import sys
 import types
 from pathlib import Path
-from unittest.mock import patch
 
 
 PIPE_PARENT = Path(__file__).resolve().parents[2]
@@ -32,8 +31,9 @@ dcd_cli_mod.pipe = pipe_mod
 sys.modules.setdefault("dcd_cli", dcd_cli_mod)
 sys.modules.setdefault("dcd_cli.pipe", pipe_mod)
 
-import stage4_md_to_openai as pipe_module  # noqa: E402
+import stage3_md_to_openai as pipe_module  # noqa: E402
 
+_extract_image_ids = pipe_module._extract_image_ids
 _md_to_openai_content_parts = pipe_module._md_to_openai_content_parts
 _parse_local_image_id = pipe_module._parse_local_image_id
 _strip_front_matter = pipe_module._strip_front_matter
@@ -72,15 +72,10 @@ def test_md_to_openai_content_parts_handles_wrapped_local_and_drops_remote() -> 
         "Omega\n"
     )
 
-    parts, filtered, dropped = _md_to_openai_content_parts(
-        md,
-        max_small_area=0,
-        label_sizes={},
-    )
+    parts, dropped = _md_to_openai_content_parts(md)
 
-    assert filtered == 0
     assert dropped == 2
-    assert [b["type"] for b in parts] == ["text", "image_url", "text"]
+    assert [block["type"] for block in parts] == ["text", "image_url", "text"]
     assert parts[0]["text"].startswith("Alpha\n")
     assert "title:" not in parts[0]["text"]
     assert parts[1] == {
@@ -98,13 +93,8 @@ def test_md_to_openai_content_parts_handles_wrapped_local_with_parentheses_in_ou
         "B"
     )
 
-    parts, filtered, dropped = _md_to_openai_content_parts(
-        md,
-        max_small_area=0,
-        label_sizes={},
-    )
+    parts, dropped = _md_to_openai_content_parts(md)
 
-    assert filtered == 0
     assert dropped == 0
     assert parts == [
         {"type": "text", "text": "A"},
@@ -113,19 +103,29 @@ def test_md_to_openai_content_parts_handles_wrapped_local_with_parentheses_in_ou
     ]
 
 
-def test_md_to_openai_content_parts_filters_small_local_images() -> None:
-    parts, filtered, dropped = _md_to_openai_content_parts(
-        "A![tiny](images/tiny.png)B",
-        max_small_area=100,
-        label_sizes={"tiny.png": (10, 10)},
-    )
+def test_md_to_openai_content_parts_keeps_tiny_local_images() -> None:
+    parts, dropped = _md_to_openai_content_parts("A![tiny](images/tiny.png)B")
 
-    assert filtered == 1
     assert dropped == 0
-    assert parts == [{"type": "text", "text": "AB"}]
+    assert parts == [
+        {"type": "text", "text": "A"},
+        {"type": "image_url", "image_url": {"url": "images/tiny.png"}},
+        {"type": "text", "text": "B"},
+    ]
 
 
-def test_map_updates_info_format_and_counters() -> None:
+def test_extract_image_ids_uses_emitted_part_order() -> None:
+    parts = [
+        {"type": "text", "text": "A"},
+        {"type": "image_url", "image_url": {"url": "images/one.png"}},
+        {"type": "image_url", "image_url": {"url": "./images/two.png"}},
+        {"type": "text", "text": "B"},
+    ]
+
+    assert _extract_image_ids(parts) == ["one.png", "two.png"]
+
+
+def test_map_updates_info_format_counters_and_image_ids() -> None:
     batch = {
         "id": ["1"],
         "data": [
@@ -140,35 +140,52 @@ def test_map_updates_info_format_and_counters() -> None:
             "[![remote2](//upload.wikimedia.org/x.png)](https://example.com/file)\n"
             "Done\n"
         ],
-        "info": ['{"format": "md", "title": "Keep Me", "image_ids": ["x"]}'],
+        "info": ['{"format": "md", "title": "Keep Me", "image_ids": ["stale"], "filtered_small_images": 9}'],
         "tags": [[]],
     }
 
-    with patch.object(pipe_module, "_get_label_sizes", return_value={"tiny.png": (10, 10)}):
-        out = pipe_map(
-            batch,
-            PipeContext(
-                dataset="demo",
-                config={
-                    "max_small_area": 100,
-                },
-            ),
-        )
+    out = pipe_map(
+        batch,
+        PipeContext(
+            dataset="demo",
+            config={"message_role": "user"},
+        ),
+    )
 
     payload = json.loads(out["data"][0])
     info = json.loads(out["info"][0])
 
     assert info["format"] == "openai"
     assert info["title"] == "Keep Me"
-    assert info["image_ids"] == ["x"]
-    assert info["filtered_small_images"] == 1
+    assert info["image_ids"] == [
+        "part/hash/local.jpg",
+        "tiny.png",
+        "part/hash/wrapped.jpg",
+    ]
+    assert "filtered_small_images" not in info
     assert info["dropped_nonlocal_images"] == 2
     assert isinstance(payload, list)
     assert payload[0]["role"] == "user"
     parts = payload[0]["content"]
-    assert [b["image_url"]["url"] for b in parts if b["type"] == "image_url"] == [
+    assert [block["image_url"]["url"] for block in parts if block["type"] == "image_url"] == [
         "images/part/hash/local.jpg",
+        "images/tiny.png",
         "images/part/hash/wrapped.jpg",
     ]
     assert "title:" not in parts[0]["text"]
     assert "Done" in parts[-1]["text"]
+
+
+def test_map_drops_empty_image_ids_when_no_local_images_survive() -> None:
+    batch = {
+        "id": ["1"],
+        "data": ["![remote](https://example.com/remote.jpg)"],
+        "info": ['{"format": "md", "image_ids": ["stale"]}'],
+        "tags": [[]],
+    }
+
+    out = pipe_map(batch, PipeContext())
+    info = json.loads(out["info"][0])
+
+    assert "image_ids" not in info
+    assert info["dropped_nonlocal_images"] == 1

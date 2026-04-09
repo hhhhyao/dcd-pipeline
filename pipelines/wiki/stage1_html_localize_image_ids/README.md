@@ -1,24 +1,46 @@
 # stage1_html_localize_image_ids
 
-Active wiki stage that localizes HTML image references using the image IDs
-already present in each row.
+Stage 1 rewrites wiki HTML image URLs to dataset-local `images/<id>` refs and
+deduplicates `images.lance` / `image_labels.lance`.
 
-Input is the Stage-0 HTML Lance dataset. The pipe only uses image IDs
-that already exist in each row's `text.info.image_ids`:
+The input dataset is resolved from framework context:
 
-1. Load `image_labels.lance`
-2. Resolve candidate original URLs for those existing image IDs
+- `ctx.volumes["dataset"]` if present
+- otherwise `/datasets/<ctx.dataset>`
+
+Expected input tables:
+
+- `text.lance`
+- `images.lance`
+- `image_labels.lance`
+
+Outputs written to `ctx.output_dir`:
+
+- `text.lance`
+- `images.lance`
+- `image_labels.lance`
+- `image_url_missing.jsonl`
+- `image_id_unmatched_warning.jsonl`
+- `dataset.yaml`
+- `run_info.yaml`
+
+Behavior:
+
+1. Read Stage-0 raw HTML rows and per-row `info.image_ids`
+2. Load candidate original image URLs from `image_labels.lance`
 3. Rewrite matching HTML `<img src=...>` to `images/<id>`
-4. Rebuild `text.info.image_ids` from the images actually rewritten
+4. Keep warning artifacts for missing HTML URLs / unmatched image IDs
+5. Deduplicate `images.lance` and `image_labels.lance` by image ID
 
-This pipe intentionally does not:
+Common config keys:
 
-- collect global HTML image candidates
-- match images outside the current row's existing `image_ids`
-- supplement missing image IDs
-
-The output contract is:
-
-- localized HTML in `text.data`
-- `text.info.image_ids` rebuilt from successfully rewritten images
-- no `text.info.html_images`
+- `cache_dir`
+- `batch_size`
+- `write_flush_rows`
+- `progress_every`
+- `extractor`
+- `normalizer`
+- `formatter`
+- `rewriter`
+- `compact_tables`
+- `overwrite`
