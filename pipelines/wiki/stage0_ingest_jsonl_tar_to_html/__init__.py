@@ -12,6 +12,8 @@ try:
         IMAGES_SCHEMA,
         TEXT_SCHEMA,
         build_image_info,
+        build_image_ref,
+        build_image_ref_id,
         build_text_info,
         compact_lance,
         extract_html_meta,
@@ -37,6 +39,8 @@ except ImportError:  # pragma: no cover - pytest package collection fallback
     IMAGES_SCHEMA = _mod.IMAGES_SCHEMA
     TEXT_SCHEMA = _mod.TEXT_SCHEMA
     build_image_info = _mod.build_image_info
+    build_image_ref = _mod.build_image_ref
+    build_image_ref_id = _mod.build_image_ref_id
     build_text_info = _mod.build_text_info
     compact_lance = _mod.compact_lance
     extract_html_meta = _mod.extract_html_meta

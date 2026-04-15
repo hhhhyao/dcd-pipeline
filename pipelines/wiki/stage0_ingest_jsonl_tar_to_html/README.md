@@ -20,13 +20,24 @@ Current Stage-0 behavior mirrors the raw-dump reference ingest:
 
 - article IDs are `sha256(html)`
 - image IDs are `sha256(image_bytes)`
+- `images.lance.image_bytes` is `large_binary`
 - HTML stays in raw remote-URL form for the next rewrite stage
 - duplicate image/image_label rows are preserved here and deduplicated in Stage 1
+- Lance writes default to `stream_once`, which buffers part outputs through
+  Arrow streams and commits each table once
+- `text.info.image_ids` lists image ids only for refs with `image_url_ori`
+- `text.info.image_refs` stores article-local image metadata keyed by
+  `<image_id>_<sha256(image_url_ori)>`
+- `image_labels.info` keeps only image-stable metadata such as `image_md5`,
+  `width`, `height`, `channel`, and `size_bytes`
+- caption/url/file fields are kept out of `image_labels.info` because they can
+  vary across articles for the same image bytes
 
 Runtime config:
 
 - `source_dir`: directory containing `part*.jsonl` and `part*.tar`
 - `log_interval`: progress log interval in articles
+- `write_strategy`: `stream_once` or `append_parts`
 
 Example:
 

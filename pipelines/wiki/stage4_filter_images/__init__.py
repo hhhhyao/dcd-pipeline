@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from dcd_cli.pipe import MultimodalBatch, PipeContext
+from dcd_cli.pipe import PipeContext
 
 
 def _parse_openai_payload(data_raw: Any) -> tuple[list[dict[str, Any]], str]:
@@ -126,7 +126,7 @@ def _filter_content_by_size(
     return (filtered_content, filtered_images)
 
 
-def map(batch: dict[str, dict[str, list[Any]]], ctx: PipeContext) -> MultimodalBatch:
+def map(batch: dict[str, dict[str, list[Any]]], ctx: PipeContext) -> dict[str, Any]:
     """Filter local image blocks by width/height metadata from the input batch."""
     config = ctx.config or {}
     min_image_width = max(0, int(config.get("min_image_width", 0)))

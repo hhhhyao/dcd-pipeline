@@ -8,8 +8,9 @@ from typing import Any
 
 ExtractorFn = Callable[[str], list[str]]
 NormalizerFn = Callable[[str], str]
-FormatterFn = Callable[[str], str]
-RewriterFn = Callable[[str, dict[str, list[str | None]]], str]
+ReplacementPayload = dict[str, str]
+FormatterFn = Callable[[str, str], ReplacementPayload]
+RewriterFn = Callable[[str, dict[str, list[ReplacementPayload | None]]], str]
 
 
 def dedupe_preserve_order(values: Iterable[str]) -> list[str]:
@@ -29,41 +30,45 @@ def json_dumps(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def extract_candidate_urls_from_label_info(info: dict[str, Any]) -> list[str]:
-    """Pull all matching candidate URLs from an image-label info dict."""
-    out: list[str] = []
-    for key in ("image_url_ori", "image_url"):
-        value = info.get(key)
-        if isinstance(value, str) and value:
-            out.append(value)
-    return dedupe_preserve_order(out)
+def parse_image_ref_id(image_ref_id: str) -> tuple[str, str] | None:
+    """Split ``image_ref_id`` into ``(image_id, image_url_ori_hash)``."""
+    if not isinstance(image_ref_id, str) or "_" not in image_ref_id:
+        return None
+    image_id, image_url_ori_hash = image_ref_id.split("_", 1)
+    if not image_id or not image_url_ori_hash:
+        return None
+    return image_id, image_url_ori_hash
 
 
 def build_local_url_map(
-    image_ids: list[str],
-    image_label_infos: dict[str, list[dict[str, Any]]],
+    image_refs: dict[str, dict[str, Any]],
     normalize_url: NormalizerFn,
-) -> tuple[dict[str, str], dict[str, list[str]], dict[str, list[str]]]:
-    """Build normalized URL -> image ID for a single text row."""
-    normalized_to_image_id: dict[str, str] = {}
-    raw_urls_by_id: dict[str, list[str]] = {}
-    normalized_urls_by_id: dict[str, list[str]] = {}
+) -> tuple[dict[str, dict[str, str]], dict[str, list[str]], dict[str, list[str]]]:
+    """Build normalized URL -> image ref payload for a single text row."""
+    normalized_to_ref: dict[str, dict[str, str]] = {}
+    raw_urls_by_ref_id: dict[str, list[str]] = {}
+    normalized_urls_by_ref_id: dict[str, list[str]] = {}
 
-    for image_id in image_ids:
+    for image_ref_id, info in image_refs.items():
+        parsed = parse_image_ref_id(image_ref_id)
+        raw_url = info.get("image_url_ori") if isinstance(info, dict) else None
         raw_urls: list[str] = []
         normalized_urls: list[str] = []
-        for info in image_label_infos.get(image_id, []):
-            for raw_url in extract_candidate_urls_from_label_info(info):
-                raw_urls.append(raw_url)
-                normalized = normalize_url(raw_url)
-                if not normalized:
-                    continue
+        if isinstance(raw_url, str) and raw_url:
+            raw_urls.append(raw_url)
+            normalized = normalize_url(raw_url)
+            if normalized:
                 normalized_urls.append(normalized)
-                normalized_to_image_id.setdefault(normalized, image_id)
-        raw_urls_by_id[image_id] = dedupe_preserve_order(raw_urls)
-        normalized_urls_by_id[image_id] = dedupe_preserve_order(normalized_urls)
+                if parsed is not None:
+                    image_id, _ = parsed
+                    normalized_to_ref.setdefault(normalized, {
+                        "image_id": image_id,
+                        "image_ref_id": image_ref_id,
+                    })
+        raw_urls_by_ref_id[image_ref_id] = dedupe_preserve_order(raw_urls)
+        normalized_urls_by_ref_id[image_ref_id] = dedupe_preserve_order(normalized_urls)
 
-    return normalized_to_image_id, raw_urls_by_id, normalized_urls_by_id
+    return normalized_to_ref, raw_urls_by_ref_id, normalized_urls_by_ref_id
 
 
 def build_html_rewrite_plan(
@@ -72,17 +77,18 @@ def build_html_rewrite_plan(
     extract_urls: ExtractorFn,
     normalize_url: NormalizerFn,
     format_image_ref: FormatterFn,
-    normalized_to_image_id: dict[str, str],
+    normalized_to_ref: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
     """Build a source-of-truth rewrite plan from extractor-returned URLs."""
     missing: list[dict[str, str]] = []
     matched_normalized_urls: set[str] = set()
     used_image_ids: list[str] = []
-    replacements_by_raw_url: dict[str, list[str | None]] = {}
+    used_image_ref_ids: list[str] = []
+    replacements_by_raw_url: dict[str, list[ReplacementPayload | None]] = {}
     for raw_url in extract_urls(html):
         normalized = normalize_url(raw_url)
-        image_id = normalized_to_image_id.get(normalized)
-        if not image_id:
+        matched_ref = normalized_to_ref.get(normalized)
+        if not matched_ref:
             missing.append({
                 "image_url_raw": raw_url,
                 "image_url_normalized": normalized,
@@ -91,12 +97,16 @@ def build_html_rewrite_plan(
             continue
 
         matched_normalized_urls.add(normalized)
+        image_id = matched_ref["image_id"]
+        image_ref_id = matched_ref["image_ref_id"]
         used_image_ids.append(image_id)
-        replacements_by_raw_url.setdefault(raw_url, []).append(format_image_ref(image_id))
+        used_image_ref_ids.append(image_ref_id)
+        replacements_by_raw_url.setdefault(raw_url, []).append(format_image_ref(image_id, image_ref_id))
 
     return {
         "replacements_by_raw_url": replacements_by_raw_url,
         "missing_urls": missing,
         "matched_normalized_urls": matched_normalized_urls,
         "used_image_ids": used_image_ids,
+        "used_image_ref_ids": used_image_ref_ids,
     }

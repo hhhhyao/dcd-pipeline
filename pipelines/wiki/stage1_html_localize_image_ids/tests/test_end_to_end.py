@@ -5,8 +5,13 @@ from types import SimpleNamespace
 
 import lance
 
-import stage1_html_localize_image_ids as pipe_module
-from workflow.core import PipelineArgs, run_pipeline
+import __init__ as pipe_module
+from workflow.core import (
+    DEFAULT_IMAGE_LABELS_IMAGE_ID_ORDER_CACHE_NAME,
+    DEFAULT_IMAGE_LABELS_IMAGE_ID_ROWIDS_CACHE_NAME,
+    PipelineArgs,
+    run_pipeline,
+)
 from tests.helpers import IMAGE_LABELS_SCHEMA, IMAGES_SCHEMA, TEXT_SCHEMA, write_dataset
 
 
@@ -19,7 +24,20 @@ def test_end_to_end_pipeline(tmp_path) -> None:
         [
             {
                 "id": "text-1",
-                "info": json.dumps({"url": "https://page/1", "image_ids": ["img-1", "img-2"]}, ensure_ascii=False),
+                "info": json.dumps({
+                    "url": "https://page/1",
+                    "image_ids": ["img-1", "img-2"],
+                    "image_refs": {
+                        "img-1_refa": {
+                            "caption_text": "first",
+                            "image_url_ori": "//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg",
+                        },
+                        "img-2_refb": {
+                            "caption_text": "other",
+                            "image_url_ori": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Bar.jpg",
+                        },
+                    },
+                }, ensure_ascii=False),
                 "data": (
                     '<img src="//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg">'
                     '<img src="https://not-found.example/x.jpg">'
@@ -43,25 +61,19 @@ def test_end_to_end_pipeline(tmp_path) -> None:
         [
             {
                 "id": "img-1",
-                "info": json.dumps({
-                    "caption_text": "first",
-                    "image_url_ori": "//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg",
-                }, ensure_ascii=False),
+                "info": json.dumps({"width": 1, "height": 2}, ensure_ascii=False),
                 "data": "",
                 "tags": ["x"],
             },
             {
                 "id": "img-1",
-                "info": json.dumps({
-                    "caption_text": "second",
-                    "image_url_ori": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Foo.jpg",
-                }, ensure_ascii=False),
+                "info": json.dumps({"height": 2, "width": 1}, ensure_ascii=False),
                 "data": "",
                 "tags": ["y"],
             },
             {
                 "id": "img-2",
-                "info": json.dumps({"caption_text": "other", "image_url_ori": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Bar.jpg"}, ensure_ascii=False),
+                "info": json.dumps({"width": 3}, ensure_ascii=False),
                 "data": "",
                 "tags": [],
             },
@@ -97,15 +109,28 @@ def test_end_to_end_pipeline(tmp_path) -> None:
     warning_records = [json.loads(line) for line in warning_lines]
 
     assert 'src="images/img-1"' in text_row["data"]
-    assert text_info["image_ids"] == ["img-1", "img-2"]
-    assert len(image_rows) == 2
+    assert '_image_ref_id="img-1_refa"' in text_row["data"]
+    assert text_info["image_ids"] == ["img-1"]
+    assert set(text_info["image_refs"]) == {"img-1_refa", "img-2_refb"}
+    assert text_info["image_refs"]["img-1_refa"]["caption_text"] == "first"
+    assert len(image_rows) == 3
     assert len(label_rows) == 2
+    assert json.loads(next(row["info"] for row in label_rows if row["id"] == "img-1")) == {"width": 1, "height": 2}
+    assert next(row["tags"] for row in label_rows if row["id"] == "img-1") == ["x", "y"]
     assert len(missing_lines) == 1
     assert len(warning_lines) == 1
-    assert warning_records[0]["type"] == "image_id_not_matched_to_html_url"
-    assert result["image_label_stats"]["info_conflicts"] == 1
-    assert "scan_images_cache_seconds" in result["timings"]
+    assert warning_records[0]["type"] == "image_ref_id_not_matched_to_html_url"
+    assert "scan_images_cache_seconds" not in result["timings"]
+    assert "dedup_images_seconds" not in result["timings"]
+    assert result["image_label_stats"]["content_mismatch_warnings"] == 0
+    assert result["image_stats"]["mode"] == "symlink"
+    assert (output_dir / "images.lance").is_symlink()
+    assert (output_dir / "images.lance").resolve() == (input_dir / "images.lance").resolve()
     assert "scan_image_labels_cache_seconds" in result["timings"]
+    assert not (output_dir / "cache" / DEFAULT_IMAGE_LABELS_IMAGE_ID_ROWIDS_CACHE_NAME).exists()
+    assert not (output_dir / "cache" / DEFAULT_IMAGE_LABELS_IMAGE_ID_ORDER_CACHE_NAME).exists()
+    assert not list((output_dir / "cache").glob("missing-*.jsonl"))
+    assert not list((output_dir / "cache").glob("warnings-*.jsonl"))
 
 
 def test_pipe_ingest_uses_dataset_volume_and_compact_table_string(tmp_path) -> None:
@@ -117,7 +142,15 @@ def test_pipe_ingest_uses_dataset_volume_and_compact_table_string(tmp_path) -> N
         [
             {
                 "id": "text-1",
-                "info": json.dumps({"url": "https://page/1", "image_ids": ["img-1"]}, ensure_ascii=False),
+                "info": json.dumps({
+                    "url": "https://page/1",
+                    "image_ids": ["img-1"],
+                    "image_refs": {
+                        "img-1_refa": {
+                            "image_url_ori": "//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg",
+                        }
+                    },
+                }, ensure_ascii=False),
                 "data": '<img src="//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg">',
                 "tags": [],
             }
@@ -134,7 +167,7 @@ def test_pipe_ingest_uses_dataset_volume_and_compact_table_string(tmp_path) -> N
         [
             {
                 "id": "img-1",
-                "info": json.dumps({"image_url_ori": "//upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Foo.jpg/250px-Foo.jpg"}, ensure_ascii=False),
+                "info": json.dumps({"width": 1}, ensure_ascii=False),
                 "data": "",
                 "tags": [],
             }
@@ -150,7 +183,7 @@ def test_pipe_ingest_uses_dataset_volume_and_compact_table_string(tmp_path) -> N
             "progress_every": 0,
             "write_flush_rows": 8,
             "batch_size": 8,
-            "compact_tables": "text,image_labels",
+            "compact_tables": "text,image_labels,images",
         },
         output_dir=output_dir,
     )
@@ -160,7 +193,7 @@ def test_pipe_ingest_uses_dataset_volume_and_compact_table_string(tmp_path) -> N
     assert result_path == output_dir
     assert (output_dir / "text.lance").is_dir()
     assert (output_dir / "image_labels.lance").is_dir()
-    assert (output_dir / "images.lance").is_dir()
+    assert (output_dir / "images.lance").is_symlink()
 
 
 def test_pipe_ingest_uses_named_dataset_under_datasets(tmp_path, monkeypatch) -> None:
@@ -174,7 +207,7 @@ def test_pipe_ingest_uses_named_dataset_under_datasets(tmp_path, monkeypatch) ->
         [
             {
                 "id": "text-1",
-                "info": json.dumps({"url": "https://page/1", "image_ids": []}, ensure_ascii=False),
+                "info": json.dumps({"url": "https://page/1", "image_ids": [], "image_refs": {}}, ensure_ascii=False),
                 "data": "",
                 "tags": [],
             }
@@ -188,7 +221,7 @@ def test_pipe_ingest_uses_named_dataset_under_datasets(tmp_path, monkeypatch) ->
     write_dataset(
         input_dir / "image_labels.lance",
         IMAGE_LABELS_SCHEMA,
-        [{"id": "img-1", "info": json.dumps({"caption_text": "seed"}, ensure_ascii=False), "data": "", "tags": []}],
+        [{"id": "img-1", "info": json.dumps({"width": 1}, ensure_ascii=False), "data": "", "tags": []}],
     )
 
     real_path = pipe_module.Path
@@ -206,6 +239,7 @@ def test_pipe_ingest_uses_named_dataset_under_datasets(tmp_path, monkeypatch) ->
 
     assert result_path == output_dir
     assert (output_dir / "text.lance").is_dir()
+    assert (output_dir / "images.lance").is_symlink()
 
 
 def test_pipe_ingest_requires_dataset_context(tmp_path) -> None:

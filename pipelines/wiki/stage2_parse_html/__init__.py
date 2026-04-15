@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
 import signal
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urljoin
 
-from lxml.html import document_fromstring
+from lxml.html import HtmlElement, document_fromstring
 
 from dcd_cli.pipe import PipeContext
 
@@ -29,6 +30,8 @@ except ImportError:  # pragma: no cover - local test/import fallback
     )
 
 LOCAL_MEDIA_PREFIXES = ("images/", "media/")
+LOCAL_IMAGE_SRC_RE = re.compile(r"^(?:\./)?images/([^?#]+)")
+IMAGE_REF_ATTRS = ("_image_ref_id", "image_ref_id", "data-image-ref-id")
 
 
 @dataclass
@@ -54,6 +57,7 @@ def run_extract_pipeline(
     meta, content = cleaner.clean(tree)
 
     html_output = make_html_converter(meta).convert(deepcopy(content))
+    apply_image_ref_alt_text(content)
     md_output = make_md_converter(meta).convert(content)
 
     return ExtractResult(
@@ -61,6 +65,38 @@ def run_extract_pipeline(
         simple_html=html_output,
         meta=meta.to_dict(),
     )
+
+
+def _local_image_id_from_src(src: str) -> str | None:
+    src = (src or "").strip()
+    match = LOCAL_IMAGE_SRC_RE.match(src)
+    if not match:
+        return None
+    image_id = match.group(1).strip("/")
+    return image_id or None
+
+
+def apply_image_ref_alt_text(tree: HtmlElement) -> None:
+    """Use Stage1 ``image_ref_id`` as Markdown image alt text.
+
+    Stage1 rewrites matched images to ``src="images/<image_id>"`` and keeps
+    the article-local reference id in ``_image_ref_id``.  Setting ``alt`` here
+    makes markdown conversion emit ``![<image_ref_id>](images/<image_id>)``:
+    the brackets preserve the image reference id, while the URL remains the
+    stable image id used by downstream Lance image APIs.
+    """
+    for img in tree.iter("img"):
+        src = img.get("src") or ""
+        if _local_image_id_from_src(src) is None:
+            continue
+        image_ref_id = ""
+        for attr in IMAGE_REF_ATTRS:
+            value = img.get(attr)
+            if value:
+                image_ref_id = value
+                break
+        if image_ref_id:
+            img.set("alt", image_ref_id)
 
 
 class AlarmTimeoutError(Exception):

@@ -32,7 +32,7 @@ from workflow.core import (  # noqa: E402
 
 
 def parse_args(argv: Sequence[str] | None = None) -> PipelineArgs:
-    """Parse CLI arguments into a typed args object."""
+    """Parse CLI arguments into a typed pipeline args object."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", default=DEFAULT_INPUT_DIR)
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)

@@ -179,8 +179,8 @@ def run(
     dst_dataset_dir: Path,
     *,
     batch_size: int = 64,
-    min_image_width: int = 0,
-    min_image_height: int = 0,
+    min_image_width: int = 28,
+    min_image_height: int = 28,
     workers: int = 1,
     run_prepare: bool = True,
 ) -> None:
@@ -326,8 +326,8 @@ def main() -> None:
         default=ROOT / "workspace" / "openai_lance" / "wiki_0320_en_has_pic_openai_filtered",
     )
     parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--min-image-width", type=int, default=0)
-    parser.add_argument("--min-image-height", type=int, default=0)
+    parser.add_argument("--min-image-width", type=int, default=28)
+    parser.add_argument("--min-image-height", type=int, default=28)
     parser.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     parser.add_argument("--no-prepare", action="store_true")
     args = parser.parse_args()

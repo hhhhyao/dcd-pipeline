@@ -173,6 +173,27 @@ class TestRestoreLocalPaths:
         assert "images/abc123/photo.jpg" in md
         assert "en.wikipedia.org/wiki/images" not in md
 
+    def test_local_image_alt_uses_image_ref_id(self) -> None:
+        pipe = load_pipe()
+        image_ref_id = "abc123_refhash"
+        html = (
+            '<html><body>'
+            '<p>Text</p>'
+            '<img src="images/abc123" alt="Caption" '
+            f'_image_ref_id="{image_ref_id}">'
+            '</body></html>'
+        )
+        info = json.dumps(
+            {"url": "https://en.wikipedia.org/wiki/Example"},
+        )
+        batch = {"id": ["1"], "info": [info], "data": [html]}
+
+        result = pipe.map(batch, CTX)
+
+        md = result["data"][0]
+        assert f"![{image_ref_id}](images/abc123)" in md
+        assert "Caption" not in md
+
 
 def test_fixture(html_fixture_case: HTMLFixtureCase) -> None:
     """Run the pipe against an HTML fixture case."""

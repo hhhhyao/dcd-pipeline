@@ -150,6 +150,12 @@ associated with the active server work dir.
 Use the DCD server tooling to create the account when needed. Then verify through the live HTTP
 login endpoint.
 
+Note: current DCD `create_user()` marks newly-created users with `temp_password=1` even when a
+password is supplied. If login succeeds but the UI keeps asking for a password reset, the server
+data is still persistent; update that user in the active work dir's `site/auth.db` with
+`dataclawdev.server.auth.db.set_password(conn, user.id, password, temp=False)`, then verify
+`POST /api/auth/login` returns `must_change_password: false`.
+
 Do not stop after checking SQLite directly. The real source of truth is whether:
 
 ```bash
@@ -178,6 +184,14 @@ Typical causes:
 - the user was created in the wrong work dir
 - the server on the port is a different DCD checkout
 - the browser is talking to a different host or port than the one you verified
+
+### Login keeps asking to reset the password
+
+Typical cause:
+
+- the account exists in the right persistent `auth.db`, but it was created with DCD's temporary
+  password flag still set; clear it with `set_password(..., temp=False)` in the active work dir
+  and verify the live login response has `must_change_password: false`
 
 ### `/login` or `/datasets` returns JSON 404
 

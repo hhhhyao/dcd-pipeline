@@ -210,6 +210,7 @@ def map(batch: dict[str, list[Any]], ctx: PipeContext) -> dict[str, list[Any]]:
         else:
             info.pop("dropped_nonlocal_images", None)
         info.pop("filtered_small_images", None)
+        info.pop("image_refs", None)
         info_out.append(json.dumps(info, ensure_ascii=False))
         ctx.set_progress(i + 1)
 

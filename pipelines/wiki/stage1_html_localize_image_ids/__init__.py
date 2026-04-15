@@ -1,4 +1,4 @@
-"""Pipe entrypoints for the wiki HTML image rewrite + dataset dedup stage."""
+"""Pipe entrypoints for the wiki HTML image rewrite + image table dedup stage."""
 
 from __future__ import annotations
 

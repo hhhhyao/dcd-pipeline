@@ -9,7 +9,7 @@ network: false
 input_format: [md]
 input_fields:
   text: [id, data, info]
-output_format: openai
+output_format: json
 output_fields:
   text: [data, info]
 config:

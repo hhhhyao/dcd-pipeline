@@ -11,6 +11,7 @@ The pipe rewrites only `text.lance`. It keeps `images.lance` and
 - strips only the leading YAML front matter block
 - scans markdown left to right and emits ordered OpenAI `content` blocks
 - keeps only local markdown images under `images/<id>` or `./images/<id>`
+- ignores Markdown image alt text, including Stage2 `image_ref_id` alt text
 - drops non-local markdown images entirely
 - does not perform any image-size filtering
 
@@ -43,6 +44,7 @@ The pipe preserves existing metadata such as `url` and `title`, and updates:
 
 `image_ids` is rebuilt from the actual emitted `image_url` blocks in block
 order.
+Any upstream `image_refs` key is removed from `info`.
 
 ## Local Run
 

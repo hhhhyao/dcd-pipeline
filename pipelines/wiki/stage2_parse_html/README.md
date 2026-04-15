@@ -32,6 +32,8 @@ simplified HTML using the extract pipeline.
    - Parses the HTML into an lxml tree
    - Extracts page metadata (title, author, date, etc.)
    - Cleans the tree (removes ads, nav, scripts, boilerplate)
+   - For Stage1-localized images, maps `_image_ref_id` into the Markdown
+     image alt text, so output uses `![<image_ref_id>](images/<image_id>)`
    - Converts the cleaned content to markdown and simplified HTML
 3. Writes the selected format back into `data`.
 

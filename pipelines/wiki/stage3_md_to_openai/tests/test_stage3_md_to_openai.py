@@ -140,7 +140,17 @@ def test_map_updates_info_format_counters_and_image_ids() -> None:
             "[![remote2](//upload.wikimedia.org/x.png)](https://example.com/file)\n"
             "Done\n"
         ],
-        "info": ['{"format": "md", "title": "Keep Me", "image_ids": ["stale"], "filtered_small_images": 9}'],
+        "info": [
+            json.dumps(
+                {
+                    "format": "md",
+                    "title": "Keep Me",
+                    "image_ids": ["stale"],
+                    "image_refs": {"stale_ref": {}},
+                    "filtered_small_images": 9,
+                },
+            ),
+        ],
         "tags": [[]],
     }
 
@@ -162,6 +172,7 @@ def test_map_updates_info_format_counters_and_image_ids() -> None:
         "tiny.png",
         "part/hash/wrapped.jpg",
     ]
+    assert "image_refs" not in info
     assert "filtered_small_images" not in info
     assert info["dropped_nonlocal_images"] == 2
     assert isinstance(payload, list)
@@ -173,6 +184,9 @@ def test_map_updates_info_format_counters_and_image_ids() -> None:
         "images/part/hash/wrapped.jpg",
     ]
     assert "title:" not in parts[0]["text"]
+    assert "local" not in "".join(
+        block.get("text", "") for block in parts if block["type"] == "text"
+    )
     assert "Done" in parts[-1]["text"]
 
 
@@ -180,7 +194,7 @@ def test_map_drops_empty_image_ids_when_no_local_images_survive() -> None:
     batch = {
         "id": ["1"],
         "data": ["![remote](https://example.com/remote.jpg)"],
-        "info": ['{"format": "md", "image_ids": ["stale"]}'],
+        "info": ['{"format": "md", "image_ids": ["stale"], "image_refs": {"stale": {}}}'],
         "tags": [[]],
     }
 
@@ -188,4 +202,5 @@ def test_map_drops_empty_image_ids_when_no_local_images_survive() -> None:
     info = json.loads(out["info"][0])
 
     assert "image_ids" not in info
+    assert "image_refs" not in info
     assert info["dropped_nonlocal_images"] == 1

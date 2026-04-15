@@ -1,0 +1,43 @@
+name: stage1_5_merge_datasets_zero_copy
+author: yao.lewei1@huawei.com
+description: Merge wiki Stage1 datasets while referencing image bytes through Lance manifests
+operation: ingest
+network: false
+output_fields:
+  text: [id, info, data, tags]
+  image: [id, image_bytes, sha256]
+  image_labels: [id, info, data, tags]
+tags: [wiki, ingest, merge, image, lance, zero-copy]
+resources:
+  cpus: 8
+  memory_mb: 65536
+  timeout_per_item: 14400
+config:
+  - name: dataset_paths
+    type: str
+    default: ""
+    label: JSON list of local Stage1 dataset paths
+  - name: output_name
+    type: str
+    default: ""
+    label: Optional dataset name for metadata
+  - name: batch_size
+    type: int
+    default: 2048
+    label: Read batch size
+  - name: progress_every
+    type: int
+    default: 5000
+    label: Emit progress after this many rows
+  - name: compact_tables
+    type: str
+    default: "image_labels"
+    label: Comma-separated tables to compact; images is intentionally ignored
+  - name: allow_text_id_duplicates
+    type: bool
+    default: true
+    label: Allow duplicate text ids
+  - name: overwrite
+    type: bool
+    default: true
+    label: Overwrite output directory contents

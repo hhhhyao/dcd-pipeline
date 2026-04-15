@@ -1,6 +1,6 @@
 name: stage1_html_localize_image_ids
 author: yao.lewei1@huawei.com
-description: Rewrite HTML image refs and deduplicate a mounted multi-table Lance dataset
+description: Rewrite HTML image refs from text.info.image_refs and deduplicate image_labels
 operation: ingest
 network: false
 output_fields:
@@ -47,7 +47,7 @@ config:
     label: Callable spec for HTML rewriting
   - name: compact_tables
     type: str
-    default: "text,image_labels,images"
+    default: "text,image_labels"
     label: Comma-separated list of tables to compact
   - name: overwrite
     type: bool

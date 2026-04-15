@@ -6,8 +6,9 @@ description: >-
 operation: ingest
 network: false
 output_fields:
-  text: [id, data, info, tags]
-  image: [id, image_bytes, sha256, info, data, tags]
+  text: [id, info, data, tags]
+  image: [id, image_bytes, sha256]
+  image_labels: [id, info, data, tags]
 tags: [wiki, ingest, html, lance]
 config:
   - name: source_dir
@@ -18,3 +19,7 @@ config:
     type: int
     default: 250
     label: Progress log interval in articles
+  - name: write_strategy
+    type: str
+    default: stream_once
+    label: "Lance write strategy: stream_once or append_parts"

@@ -36,12 +36,15 @@ def normalize_image_url(url: str) -> str:
     return normalized
 
 
-def format_image_ref(image_id: str) -> str:
-    """Format the dataset-local HTML image reference."""
-    return f"images/{image_id}"
+def format_image_ref(image_id: str, image_ref_id: str) -> dict[str, str]:
+    """Format the dataset-local HTML image reference payload."""
+    return {
+        "src": f"images/{image_id}",
+        "image_ref_id": image_ref_id,
+    }
 
 
-def rewrite_html(html: str, replacements_by_raw_url: dict[str, list[str | None]]) -> str:
+def rewrite_html(html: str, replacements_by_raw_url: dict[str, list[dict[str, str] | None]]) -> str:
     """Rewrite HTML ``img[src]`` values using per-raw-url replacement queues."""
     if not replacements_by_raw_url:
         return html
@@ -62,7 +65,23 @@ def rewrite_html(html: str, replacements_by_raw_url: dict[str, list[str | None]]
             replacement = queue.popleft()
             if replacement is not None:
                 tag = SRCSET_RE.sub("", tag)
-                tag = IMG_SRC_RE.sub(rf"\g<1>{replacement}\g<3>", tag, count=1)
+                rewritten = IMG_SRC_RE.sub(rf"\g<1>{replacement['src']}\g<3>", tag, count=1)
+                if "_image_ref_id=" in rewritten:
+                    rewritten = re.sub(
+                        r'(\s_image_ref_id=["\'])[^"\']*(["\'])',
+                        rf'\g<1>{replacement["image_ref_id"]}\g<2>',
+                        rewritten,
+                        count=1,
+                        flags=re.IGNORECASE,
+                    )
+                else:
+                    rewritten = re.sub(
+                        r"\s*/?>$",
+                        lambda match: f' _image_ref_id="{replacement["image_ref_id"]}"{match.group(0)}',
+                        rewritten,
+                        count=1,
+                    )
+                tag = rewritten
         out.append(html[cursor:start])
         out.append(tag)
         cursor = end

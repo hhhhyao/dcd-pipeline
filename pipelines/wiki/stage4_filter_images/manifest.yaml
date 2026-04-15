@@ -5,20 +5,20 @@ description: >-
   only, without tokenization or splitting.
 operation: map
 network: false
-input_format: [openai]
+input_format: [json]
 input_fields:
   text: [id, data, info]
   image_labels: [id, info]
-output_format: openai
+output_format: json
 output_fields:
   text: [data, info]
 config:
   - name: min_image_width
     type: int
-    default: 0
+    default: 28
     label: Drop images narrower than this many pixels
   - name: min_image_height
     type: int
-    default: 0
+    default: 28
     label: Drop images shorter than this many pixels
 tags: [wiki, openai, image, filter, multimodal]

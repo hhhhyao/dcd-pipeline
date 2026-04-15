@@ -1,4 +1,4 @@
-"""Lance helpers for scans, writes, caches, and compaction."""
+"""Lance helpers for scans, stream-once writes, caches, and compaction."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -86,7 +87,7 @@ def load_callable(spec: str) -> Callable[..., Any]:
 
 
 def dedupe_preserve_order(values: Iterable[str]) -> list[str]:
-    """Return unique values in first-seen order."""
+    """Return unique non-empty string values in first-seen order."""
     seen: set[str] = set()
     out: list[str] = []
     for value in values:
@@ -104,6 +105,16 @@ def prepare_output_dir(output_dir: Path, overwrite: bool) -> None:
             raise FileExistsError(f"Output directory already exists: {output_dir}")
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+
+def create_absolute_symlink(source_path: Path, link_path: Path) -> None:
+    """Create ``link_path`` as an absolute symlink to ``source_path``."""
+    if link_path.exists() or link_path.is_symlink():
+        if link_path.is_dir() and not link_path.is_symlink():
+            shutil.rmtree(link_path)
+        else:
+            link_path.unlink()
+    os.symlink(str(source_path.resolve()), str(link_path))
 
 
 def quote_sql_string(value: str) -> str:
@@ -135,7 +146,7 @@ def make_scanner(
     filter_expr: str | None = None,
     with_row_id: bool = False,
 ) -> Any:
-    """Build a Lance scanner with a few compatibility fallbacks."""
+    """Build a Lance scanner with compatibility fallbacks."""
     scanner_kwargs: dict[str, Any] = {
         "columns": columns,
         "batch_size": batch_size,
@@ -170,28 +181,113 @@ def iter_batches(scanner: Any, batch_size: int) -> Iterable[Any]:
     raise RuntimeError("Unsupported Lance scanner type.")
 
 
-def append_rows_to_lance_dataset(
-    rows: list[dict[str, Any]],
-    schema: pa.Schema,
-    dataset_path: Path,
-) -> None:
-    """Append rows to a Lance dataset, creating it if needed."""
-    if not rows:
-        return
-    table = pa.Table.from_pydict(
-        {
-            field.name: [row.get(field.name) for row in rows]
-            for field in schema
-        },
+def rows_to_table(rows: list[dict[str, Any]], schema: pa.Schema) -> pa.Table:
+    """Convert row dicts to a typed Arrow table."""
+    return pa.Table.from_pydict(
+        {field.name: [row.get(field.name) for row in rows] for field in schema},
         schema=schema,
     )
-    mode = "append" if dataset_path.exists() else "create"
-    lance.write_dataset(
-        table,
-        str(dataset_path),
-        mode=mode,
-        data_storage_version="2.1",
+
+
+def columns_to_table(columns: dict[str, Sequence[Any]], schema: pa.Schema) -> pa.Table:
+    """Convert column arrays to a typed Arrow table."""
+    return pa.Table.from_pydict(
+        {field.name: list(columns.get(field.name, [])) for field in schema},
+        schema=schema,
     )
+
+
+@dataclass
+class LanceWriteStats:
+    """Bookkeeping for a logical dataset write."""
+
+    write_seconds: float = 0.0
+    finalize_seconds: float = 0.0
+    rows_written: int = 0
+    batches_written: int = 0
+
+    @property
+    def total_seconds(self) -> float:
+        return self.write_seconds + self.finalize_seconds
+
+
+class LanceDatasetWriter:
+    """Single-commit Lance writer backed by an Arrow IPC stream.
+
+    The pipe writes batches incrementally into a temporary Arrow stream, then
+    performs one ``lance.write_dataset`` call at finalize time. This keeps memory
+    bounded while avoiding many append commits.
+    """
+
+    def __init__(self, dataset_path: Path, schema: pa.Schema, *, temp_dir: Path) -> None:
+        self.dataset_path = dataset_path
+        self.schema = schema
+        self.temp_dir = temp_dir
+        self.stats = LanceWriteStats()
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f"{dataset_path.stem}_",
+            suffix=".arrowstream",
+            dir=str(self.temp_dir),
+        )
+        os.close(fd)
+        self._tmp_path: Path | None = Path(tmp_name)
+        self._stream_sink: pa.OSFile | None = pa.OSFile(str(self._tmp_path), "wb")
+        self._stream_writer: pa.ipc.RecordBatchStreamWriter | None = pa.ipc.new_stream(
+            self._stream_sink,
+            schema,
+        )
+
+    def write_rows(self, rows: list[dict[str, Any]]) -> None:
+        if rows:
+            self.write_table(rows_to_table(rows, self.schema))
+
+    def write_columns(self, columns: dict[str, Sequence[Any]]) -> None:
+        if not columns:
+            return
+        row_count = len(next(iter(columns.values()), []))
+        if row_count > 0:
+            self.write_table(columns_to_table(columns, self.schema))
+
+    def write_table(self, table: pa.Table) -> None:
+        if table.num_rows <= 0:
+            return
+        if self._stream_writer is None:
+            raise RuntimeError("stream writer is not initialized")
+        t0 = time.perf_counter()
+        for batch in table.to_batches():
+            self._stream_writer.write_batch(batch)
+            self.stats.batches_written += 1
+        self.stats.write_seconds += time.perf_counter() - t0
+        self.stats.rows_written += table.num_rows
+
+    def finalize(self) -> LanceWriteStats:
+        t0 = time.perf_counter()
+        try:
+            if self._stream_writer is not None:
+                self._stream_writer.close()
+                self._stream_writer = None
+            if self._stream_sink is not None:
+                self._stream_sink.close()
+                self._stream_sink = None
+            if self.stats.rows_written > 0 and self._tmp_path is not None:
+                reader = pa.ipc.open_stream(str(self._tmp_path))
+                data: Any = reader
+            else:
+                data = pa.Table.from_batches([], schema=self.schema)
+            lance.write_dataset(
+                data,
+                str(self.dataset_path),
+                mode="create",
+                schema=self.schema,
+                data_storage_version="2.1",
+            )
+        finally:
+            if self._tmp_path is not None:
+                self._tmp_path.unlink(missing_ok=True)
+                self._tmp_path = None
+        self.stats.finalize_seconds += time.perf_counter() - t0
+        return self.stats
 
 
 def scan_image_label_caches(
@@ -202,17 +298,9 @@ def scan_image_label_caches(
     batch_size: int,
     progress_every: int,
 ) -> dict[str, int]:
-    """Scan image_labels once and persist dedup-oriented caches.
-
-    The cached ``row_ids`` are logical row positions for ``Dataset.take()``,
-    not Lance internal ``_rowid`` values.
-    """
+    """Scan image_labels once and persist dedup-oriented caches."""
     ds = lance.dataset(str(image_labels_path))
-    counters = {
-        "rows": 0,
-        "unique_image_ids": 0,
-        "duplicate_rows": 0,
-    }
+    counters = {"rows": 0, "unique_image_ids": 0, "duplicate_rows": 0}
     progress = StageProgress(
         name="image_labels_cache",
         total_rows=int(ds.count_rows()),
@@ -221,14 +309,9 @@ def scan_image_label_caches(
     )
     row_ids_by_image_id: dict[str, list[int]] = {}
     order_rows: list[dict[str, Any]] = []
-
-    scanner = make_scanner(
-        ds,
-        columns=["id"],
-        batch_size=batch_size,
-    )
     ordinal = 0
     next_position = 0
+    scanner = make_scanner(ds, columns=["id"], batch_size=batch_size)
     for batch in iter_batches(scanner, batch_size):
         ids = batch.column("id").to_pylist()
         row_positions = range(next_position, next_position + len(ids))
@@ -273,17 +356,9 @@ def scan_images_caches(
     batch_size: int,
     progress_every: int,
 ) -> dict[str, int]:
-    """Scan images once and persist first-seen ordering for dedup.
-
-    The cached ``first_row_id`` is the logical row position for
-    ``Dataset.take()``, not Lance internal ``_rowid`` values.
-    """
+    """Scan images once and persist first-seen ordering for dedup."""
     ds = lance.dataset(str(images_path))
-    counters = {
-        "rows": 0,
-        "unique_image_ids": 0,
-        "duplicate_rows": 0,
-    }
+    counters = {"rows": 0, "unique_image_ids": 0, "duplicate_rows": 0}
     progress = StageProgress(
         name="images_cache",
         total_rows=int(ds.count_rows()),
@@ -292,14 +367,9 @@ def scan_images_caches(
     )
     first_row_id_by_image_id: dict[str, int] = {}
     order_rows: list[dict[str, Any]] = []
-
-    scanner = make_scanner(
-        ds,
-        columns=["id"],
-        batch_size=batch_size,
-    )
     ordinal = 0
     next_position = 0
+    scanner = make_scanner(ds, columns=["id"], batch_size=batch_size)
     for batch in iter_batches(scanner, batch_size):
         ids = batch.column("id").to_pylist()
         row_positions = range(next_position, next_position + len(ids))
@@ -392,42 +462,43 @@ def _rss_gib() -> float:
     return 0.0
 
 
-def compact_lance_table(lance_path: str, table_name: str) -> None:
+def compact_lance_table(lance_path: str, table_name: str) -> dict[str, float]:
     """Compact a Lance dataset and refresh scalar indices."""
     LOG.info("Compacting %s (%s) ...", lance_path, table_name)
     t0 = time.time()
     ds: Any = lance.dataset(lance_path)
+    metrics = {
+        "rewrite_execute_seconds": 0.0,
+        "commit_seconds": 0.0,
+        "index_create_seconds": 0.0,
+        "optimize_indices_seconds": 0.0,
+        "cleanup_old_versions_seconds": 0.0,
+        "total_seconds": 0.0,
+    }
     compact_kwargs: dict[str, Any] = {}
     if table_name == "images":
         compact_kwargs.update(IMAGE_COMPACTION_OPTIONS)
-        LOG.info("Using image compaction options: %s", compact_kwargs)
     plan = Compaction.plan(ds, compact_kwargs)
-    tasks = list(plan.tasks)
-    total_tasks = len(tasks)
-    LOG.info("Compaction plan for %s: %d task(s)", table_name, total_tasks)
-
     rewrites = []
+    tasks = list(plan.tasks)
     progress_t0 = time.time()
     for task_idx, task in enumerate(tasks, start=1):
+        task_t0 = time.perf_counter()
         rewrites.append(task.execute(ds))
+        metrics["rewrite_execute_seconds"] += time.perf_counter() - task_t0
         elapsed = time.time() - progress_t0
-        avg_task_seconds = elapsed / task_idx if task_idx else 0.0
-        remaining_seconds = avg_task_seconds * max(total_tasks - task_idx, 0)
-        eta_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() + remaining_seconds))
         LOG.info(
-            "Compaction progress %s: %d/%d tasks (%.1f%%) [elapsed %.0fs, eta %s, rss %.1f GiB]",
+            "Compaction progress %s: %d/%d tasks [elapsed %.0fs, rss %.1f GiB]",
             table_name,
             task_idx,
-            total_tasks,
-            task_idx / total_tasks * 100 if total_tasks else 100.0,
+            len(tasks),
             elapsed,
-            eta_str,
             _rss_gib(),
         )
     if rewrites:
+        commit_t0 = time.perf_counter()
         Compaction.commit(ds, rewrites)
-    else:
-        LOG.info("No compaction rewrites needed for %s", table_name)
+        metrics["commit_seconds"] += time.perf_counter() - commit_t0
 
     existing = {idx["name"] for idx in ds.list_indices()}
     index_plan: list[tuple[str, str]] = [("id", "BTREE")]
@@ -436,41 +507,60 @@ def compact_lance_table(lance_path: str, table_name: str) -> None:
     for column_name, index_type in index_plan:
         index_name = f"{column_name}_idx"
         if index_name not in existing:
-            LOG.info("Creating %s index on '%s' ...", index_type, column_name)
+            index_t0 = time.perf_counter()
             ds.create_scalar_index(column_name, index_type=index_type)
+            metrics["index_create_seconds"] += time.perf_counter() - index_t0
 
+    optimize_t0 = time.perf_counter()
     ds.optimize.optimize_indices()
+    metrics["optimize_indices_seconds"] += time.perf_counter() - optimize_t0
     if hasattr(ds, "cleanup_old_versions"):
+        cleanup_t0 = time.perf_counter()
         stats = ds.cleanup_old_versions(
             older_than=timedelta(seconds=0),
             delete_unverified=True,
         )
+        metrics["cleanup_old_versions_seconds"] += time.perf_counter() - cleanup_t0
         if getattr(stats, "bytes_removed", 0):
             LOG.info(
                 "Cleaned up %d old versions, freed %.1f GB",
                 stats.old_versions,
                 stats.bytes_removed / 1e9,
             )
-    LOG.info("Compact %s done in %.0fs", table_name, time.time() - t0)
+    metrics["total_seconds"] = time.time() - t0
+    LOG.info("Compact %s done in %.0fs", table_name, metrics["total_seconds"])
+    return metrics
 
 
 def normalize_compact_tables(table_names: list[str] | None) -> list[str]:
     """Return compact table names in preferred execution order."""
     if table_names is None:
-        requested = set(COMPACT_TABLE_ORDER)
+        requested = {"text", "image_labels"}
     else:
         requested = set(table_names)
         unknown = requested.difference(COMPACT_TABLE_ORDER)
         if unknown:
             raise ValueError(f"unknown compact table(s): {sorted(unknown)}")
+    if "images" in requested:
+        LOG.warning("Skipping compaction request for images because output images.lance is a source symlink")
+        requested.discard("images")
     return [name for name in COMPACT_TABLE_ORDER if name in requested]
 
 
-def compact_selected_tables(output_dir: Path, compact_tables: list[str]) -> None:
+def compact_selected_tables(output_dir: Path, compact_tables: list[str]) -> dict[str, Any]:
     """Compact selected output Lance datasets in stable order."""
+    aggregated = {
+        "rewrite_execute_seconds": 0.0,
+        "commit_seconds": 0.0,
+        "index_create_seconds": 0.0,
+        "optimize_indices_seconds": 0.0,
+        "cleanup_old_versions_seconds": 0.0,
+        "total_seconds": 0.0,
+    }
+    table_metrics: dict[str, dict[str, float]] = {}
     if not compact_tables:
         LOG.info("Skipping compaction because no tables were selected")
-        return
+        return {"tables": table_metrics, "profile": {"metrics": aggregated}}
     lance_paths = {
         "text": output_dir / "text.lance",
         "image_labels": output_dir / "image_labels.lance",
@@ -481,4 +571,8 @@ def compact_selected_tables(output_dir: Path, compact_tables: list[str]) -> None
         if not lance_path.exists():
             LOG.warning("Skipping compaction for %s because %s does not exist", table_name, lance_path)
             continue
-        compact_lance_table(str(lance_path), table_name)
+        metrics = compact_lance_table(str(lance_path), table_name)
+        table_metrics[table_name] = metrics
+        for key, value in metrics.items():
+            aggregated[key] += value
+    return {"tables": table_metrics, "profile": {"metrics": aggregated}}
