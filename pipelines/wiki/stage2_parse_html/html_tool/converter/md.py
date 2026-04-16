@@ -124,11 +124,11 @@ class MarkdownConverter:
 
     def __init__(self, meta: PageMeta) -> None:
         """Initialise with page metadata."""
-        self._fn: Callable[..., str] | None = None
+        self._fn: Callable[..., str | dict[str, object]] | None = None
         self._opts: object | None = None
         self._meta = meta
 
-    def _resolve(self) -> Callable[..., str]:
+    def _resolve(self) -> Callable[..., str | dict[str, object]]:
         """Load html-to-markdown and return the conversion callable."""
         try:
             module = importlib.import_module("html_to_markdown")
@@ -145,10 +145,11 @@ class MarkdownConverter:
                 code_block_style="backticks",
             )
 
+        convert_fn = Callable[..., str | dict[str, object]]
         if hasattr(module, "convert"):
-            return cast(Callable[..., str], module.convert)
+            return cast(convert_fn, module.convert)
         if hasattr(module, "html_to_markdown"):
-            return cast(Callable[..., str], module.html_to_markdown)
+            return cast(convert_fn, module.html_to_markdown)
 
         print("Unsupported html-to-markdown export shape.", file=sys.stderr)
         sys.exit(1)
@@ -170,9 +171,12 @@ class MarkdownConverter:
         remove_void_list_items(tree)
         html = tostring(tree, encoding="unicode", method="html")
         if self._opts is not None:
-            markdown = self._fn(html, options=self._opts)
+            raw = self._fn(html, options=self._opts)
         else:
-            markdown = self._fn(html)
+            raw = self._fn(html)
+        markdown: str = (
+            str(raw["content"]) if isinstance(raw, dict) else raw
+        )
         markdown = normalize_whitespace(markdown)
         front_matter = format_front_matter(self._meta.to_dict())
         if front_matter:

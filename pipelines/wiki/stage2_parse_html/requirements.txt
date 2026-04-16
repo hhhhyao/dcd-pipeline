@@ -1,2 +1,2 @@
 lxml
-html-to-markdown
+html-to-markdown>=3
