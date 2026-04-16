@@ -1,7 +1,7 @@
 # stage4_filter_images
 
 Filter the OpenAI `image_url` blocks emitted by `stage3_md_to_openai` using
-`image_labels` metadata supplied in the input batch.
+image label metadata supplied in the input batch.
 
 The manifest declares JSON input/output for compatibility with the current
 `dcd-cli` validator; the JSON payload itself is still the OpenAI-style
@@ -13,8 +13,8 @@ This stage does not tokenize, truncate, or split rows.
 
 - reads `min_image_width` and `min_image_height` from config
 - defaults to filtering images smaller than `28x28`
-- reads image width and height from multimodal batch input
-  `image_labels: [id, info]`
+- reads image width and height from DCD multimodal batch input
+  `image: [label_data]`
 - keeps rows 1:1
 - removes only `image_url` blocks whose known size is below the threshold
 - keeps images when width/height metadata is missing from the batch

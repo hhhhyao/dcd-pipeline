@@ -1,14 +1,14 @@
 name: stage4_filter_images
 author: yao.lewei1@huawei.com
 description: >-
-  Filter stage3 OpenAI image blocks by image_labels width and height metadata
+  Filter stage3 OpenAI image blocks by image label width and height metadata
   only, without tokenization or splitting.
 operation: map
 network: false
 input_format: [json]
 input_fields:
   text: [id, data, info]
-  image_labels: [id, info]
+  image: [label_data]
 output_format: json
 output_fields:
   text: [data, info]

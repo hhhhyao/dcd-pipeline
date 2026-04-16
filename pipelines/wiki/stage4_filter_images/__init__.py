@@ -1,11 +1,11 @@
-"""Filter OpenAI image blocks by image_labels metadata from the input batch."""
+"""Filter OpenAI image blocks by image label metadata from the input batch."""
 
 from __future__ import annotations
 
 import json
 from typing import Any
 
-from dcd_cli.pipe import PipeContext
+from dcd_cli.pipe import Batch, MultimodalBatch, PipeContext
 
 
 def _parse_openai_payload(data_raw: Any) -> tuple[list[dict[str, Any]], str]:
@@ -64,29 +64,53 @@ def _extract_image_ids(parts: list[dict[str, Any]]) -> list[str]:
     return image_ids
 
 
-def _build_image_size_index(image_labels_batch: dict[str, list[Any]]) -> dict[str, tuple[int, int]]:
-    ids = image_labels_batch.get("id") or []
-    infos = image_labels_batch.get("info") or []
+def _parse_json_obj(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw or "{}")
+        except json.JSONDecodeError:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
+def _label_info_from_label_data(raw: Any) -> tuple[str | None, dict[str, Any]]:
+    label = _parse_json_obj(raw)
+    image_id = label.get("id")
+    info = label.get("info")
+    if info is not None:
+        return (str(image_id) if image_id else None, _parse_json_obj(info))
+    return (str(image_id) if image_id else None, label)
+
+
+def _build_image_size_index(
+    label_data: list[Any],
+) -> dict[str, tuple[int, int]]:
     size_index: dict[str, tuple[int, int]] = {}
-    for image_id, info_raw in zip(ids, infos, strict=True):
-        if not image_id or not info_raw:
-            continue
-        try:
-            info = json.loads(info_raw) if isinstance(info_raw, str) else info_raw
-        except (TypeError, json.JSONDecodeError):
-            continue
-        if not isinstance(info, dict):
-            continue
-        width = info.get("width")
-        height = info.get("height")
-        try:
-            width_i = int(width) if width is not None else 0
-            height_i = int(height) if height is not None else 0
-        except (TypeError, ValueError):
-            continue
-        if width_i > 0 and height_i > 0:
-            size_index[str(image_id)] = (width_i, height_i)
+    for label_raw in label_data:
+        image_id, info = _label_info_from_label_data(label_raw)
+        _add_image_size(size_index, image_id, info)
     return size_index
+
+
+def _add_image_size(
+    size_index: dict[str, tuple[int, int]],
+    image_id: Any,
+    info: dict[str, Any],
+) -> None:
+    if not image_id or not info:
+        return
+    width = info.get("width")
+    height = info.get("height")
+    try:
+        width_i = int(width) if width is not None else 0
+        height_i = int(height) if height is not None else 0
+    except (TypeError, ValueError):
+        return
+    if width_i > 0 and height_i > 0:
+        size_index[str(image_id)] = (width_i, height_i)
 
 
 def _filter_content_by_size(
@@ -126,20 +150,24 @@ def _filter_content_by_size(
     return (filtered_content, filtered_images)
 
 
-def map(batch: dict[str, dict[str, list[Any]]], ctx: PipeContext) -> dict[str, Any]:
+def map(
+    batch: MultimodalBatch,
+    ctx: PipeContext,
+) -> Batch:
     """Filter local image blocks by width/height metadata from the input batch."""
     config = ctx.config or {}
     min_image_width = max(0, int(config.get("min_image_width", 0)))
     min_image_height = max(0, int(config.get("min_image_height", 0)))
 
     text_batch = batch["text"]
-    image_labels_batch = batch.get("image_labels", {})
-    image_sizes = _build_image_size_index(image_labels_batch)
+    image_sizes = _build_image_size_index(batch["image"]["label_data"])
 
     data_out: list[str] = []
     info_out: list[str] = []
 
-    for i, (data_raw, info_raw) in enumerate(zip(text_batch["data"], text_batch["info"], strict=True)):
+    for i, (data_raw, info_raw) in enumerate(
+        zip(text_batch["data"], text_batch["info"], strict=True),
+    ):
         info_raw = info_raw or "{}"
         try:
             info = json.loads(info_raw) if isinstance(info_raw, str) else info_raw
@@ -170,9 +198,7 @@ def map(batch: dict[str, dict[str, list[Any]]], ctx: PipeContext) -> dict[str, A
         ctx.set_progress(i + 1)
 
     return {
-        "text": {
-            **text_batch,
-            "data": data_out,
-            "info": info_out,
-        },
+        **text_batch,
+        "data": data_out,
+        "info": info_out,
     }
