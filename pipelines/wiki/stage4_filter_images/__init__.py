@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from dcd_cli.pipe import Batch, MultimodalBatch, PipeContext
+from dcd_cli.pipe import Batch, PipeContext
 
 
 def _parse_openai_payload(data_raw: Any) -> tuple[list[dict[str, Any]], str]:
@@ -150,8 +150,20 @@ def _filter_content_by_size(
     return (filtered_content, filtered_images)
 
 
+def _text_batch_from_prefixed(batch: Batch) -> Batch:
+    text_data = batch["text/data"]
+    keep_indices = [i for i, value in enumerate(text_data) if value is not None]
+    text_batch: Batch = {}
+    for key, values in batch.items():
+        if not key.startswith("text/"):
+            continue
+        column = key.split("/", 1)[1]
+        text_batch[column] = [values[i] for i in keep_indices]
+    return text_batch
+
+
 def map(
-    batch: MultimodalBatch,
+    batch: Batch,
     ctx: PipeContext,
 ) -> Batch:
     """Filter local image blocks by width/height metadata from the input batch."""
@@ -159,8 +171,12 @@ def map(
     min_image_width = max(0, int(config.get("min_image_width", 0)))
     min_image_height = max(0, int(config.get("min_image_height", 0)))
 
-    text_batch = batch["text"]
-    image_sizes = _build_image_size_index(batch["image"]["label_data"])
+    text_batch = _text_batch_from_prefixed(batch)
+    label_data = [
+        label for label in batch["image/label_data"]
+        if label is not None
+    ]
+    image_sizes = _build_image_size_index(label_data)
 
     data_out: list[str] = []
     info_out: list[str] = []
