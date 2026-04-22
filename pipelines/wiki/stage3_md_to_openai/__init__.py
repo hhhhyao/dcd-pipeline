@@ -24,7 +24,7 @@ def _strip_front_matter(md: str) -> str:
 
 
 def _parse_local_image_id(href: str) -> str | None:
-    href = href.strip()
+    href = _parse_markdown_link_destination(href)
     if href.startswith("./"):
         href = href[2:]
     if not href.startswith("images/"):
@@ -32,6 +32,27 @@ def _parse_local_image_id(href: str) -> str | None:
     rest = href[len("images/") :]
     rest = rest.split("?", 1)[0].split("#", 1)[0].strip("/")
     return rest or None
+
+
+def _parse_markdown_link_destination(href: str) -> str:
+    """Return the Markdown link destination, excluding any optional title."""
+    href = href.strip()
+    if href.startswith("<"):
+        close_idx = href.find(">")
+        if close_idx > 0:
+            return href[1:close_idx].strip()
+
+    escaped = False
+    for idx, ch in enumerate(href):
+        if escaped:
+            escaped = False
+            continue
+        if ch == "\\":
+            escaped = True
+            continue
+        if ch.isspace():
+            return href[:idx]
+    return href
 
 
 def _merge_adjacent_text(items: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -1,6 +1,6 @@
 name: stage2_parse_html
 description: Parse raw HTML into cleaned markdown and simplified HTML with agent in the loop
-author: yao.lewei@huawei.com
+author: yao.lewei1@huawei.com
 operation: map
 input_format: [html]
 input_fields:

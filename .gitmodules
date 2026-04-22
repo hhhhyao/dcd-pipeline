@@ -1,8 +1,12 @@
 [submodule "reference_repo/dcd"]
 	path = reference_repo/dcd
-	url = https://github.com/flymin/dcd.git
+	url = git@github.com:flymin/dcd.git
 	branch = main
 [submodule "reference_repo/dcd-cli"]
 	path = reference_repo/dcd-cli
-	url = https://github.com/dataclawdev/dcd-cli.git
+	url = git@github.com:dataclawdev/dcd-cli.git
+	branch = main
+[submodule "reference_repo/dcd-server"]
+	path = reference_repo/dcd-server
+	url = git@github.com:dataclawdev/dcd-server.git
 	branch = main

@@ -59,6 +59,18 @@ def test_parse_local_image_id_keeps_nested_image_path() -> None:
     assert _parse_local_image_id(href) == "part2026-03-20-00000/hash/file.jpg"
 
 
+def test_parse_local_image_id_ignores_markdown_title() -> None:
+    assert _parse_local_image_id('images/part/hash/file.jpg "Image title"') == (
+        "part/hash/file.jpg"
+    )
+
+
+def test_parse_local_image_id_handles_angle_wrapped_destination() -> None:
+    assert _parse_local_image_id('<images/part/hash/file name.jpg> "Image title"') == (
+        "part/hash/file name.jpg"
+    )
+
+
 def test_md_to_openai_content_parts_handles_wrapped_local_and_drops_remote() -> None:
     md = (
         "---\n"

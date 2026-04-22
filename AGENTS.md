@@ -17,10 +17,19 @@ Before doing implementation, validation, or local server work:
 git submodule update --init --recursive
 ```
 
+   Optional: sync all reference submodules to the latest upstream `main` (see `branch` in `.gitmodules`):
+
+```bash
+git submodule update --remote --merge
+```
+
+   Commit updated submodule pointers in the parent repo when you intend to pin a new upstream revision for collaborators.
+
 2. Confirm the upstream reference repos exist:
 
 - `reference_repo/dcd`
 - `reference_repo/dcd-cli`
+- `reference_repo/dcd-server`
 
 3. If a command depends on local host or credentials, read `.server_info` when present.
 
@@ -69,10 +78,16 @@ If repo-local habits conflict with those docs, follow the upstream docs.
 
 ### Upstream Repos
 
-- Treat `reference_repo/dcd` and `reference_repo/dcd-cli` as upstream references.
+Source-of-truth split:
+
+- **Pipes** — `reference_repo/dcd-cli` (manifests, runtime semantics, `dcd` CLI, validation). This stays the normative reference for pipe work.
+- **Server/runtime implementation** — `reference_repo/dcd-server` when you need up-to-date server-side code (APIs, job runner, sandbox, and related `dataclawdev` code paths).
+- **Full-stack local viewer / frontend** — `reference_repo/dcd` for integrated layout and docs; if that submodule cannot track upstream, prefer `dcd-server` for backend freshness and still rely on `dcd-cli` for pipe contracts.
+
+- Treat `reference_repo/dcd`, `reference_repo/dcd-cli`, and `reference_repo/dcd-server` as upstream references.
 - Prefer wrapper scripts, environment variables, local work dirs, symlinks, and repo-local
   helper docs over editing upstream code.
-- Do not modify code under `reference_repo/dcd` or `reference_repo/dcd-cli` unless the user
+- Do not modify code under `reference_repo/dcd`, `reference_repo/dcd-cli`, or `reference_repo/dcd-server` unless the user
   explicitly asks for upstream source changes.
 - If a local setup problem can be solved without upstream edits, solve it at the runtime or
   configuration layer instead.
