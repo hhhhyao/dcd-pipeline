@@ -60,15 +60,11 @@ def test_parse_local_image_id_keeps_nested_image_path() -> None:
 
 
 def test_parse_local_image_id_ignores_markdown_title() -> None:
-    assert _parse_local_image_id('images/part/hash/file.jpg "Image title"') == (
-        "part/hash/file.jpg"
-    )
+    image_id = "c01db86c5f82f8a7a2df97f857e2ef6fe1b7d8612b8715d396915974a38bae81"
 
-
-def test_parse_local_image_id_handles_angle_wrapped_destination() -> None:
-    assert _parse_local_image_id('<images/part/hash/file name.jpg> "Image title"') == (
-        "part/hash/file name.jpg"
-    )
+    assert _parse_local_image_id(f'images/{image_id} "Kamnev"') == image_id
+    assert _parse_local_image_id(f"./images/{image_id} 'Kamnev'") == image_id
+    assert _parse_local_image_id(f"<images/{image_id}> \"Kamnev\"") == image_id
 
 
 def test_md_to_openai_content_parts_handles_wrapped_local_and_drops_remote() -> None:
@@ -122,6 +118,19 @@ def test_md_to_openai_content_parts_keeps_tiny_local_images() -> None:
     assert parts == [
         {"type": "text", "text": "A"},
         {"type": "image_url", "image_url": {"url": "images/tiny.png"}},
+        {"type": "text", "text": "B"},
+    ]
+
+
+def test_md_to_openai_content_parts_strips_image_title_from_url() -> None:
+    image_id = "c01db86c5f82f8a7a2df97f857e2ef6fe1b7d8612b8715d396915974a38bae81"
+
+    parts, dropped = _md_to_openai_content_parts(f'A![{image_id}](images/{image_id} "Kamnev")B')
+
+    assert dropped == 0
+    assert parts == [
+        {"type": "text", "text": "A"},
+        {"type": "image_url", "image_url": {"url": f"images/{image_id}"}},
         {"type": "text", "text": "B"},
     ]
 
