@@ -174,9 +174,17 @@ class MarkdownConverter:
             raw = self._fn(html, options=self._opts)
         else:
             raw = self._fn(html)
-        markdown: str = (
-            str(raw["content"]) if isinstance(raw, dict) else raw
-        )
+        # html-to-markdown >=3 returns a ConversionResult object with a
+        # ``content`` attribute; older versions return either a plain
+        # string or a dict.
+        if isinstance(raw, str):
+            markdown = raw
+        elif isinstance(raw, dict):
+            markdown = str(raw.get("content", ""))
+        elif hasattr(raw, "content"):
+            markdown = str(raw.content)
+        else:
+            markdown = str(raw)
         markdown = normalize_whitespace(markdown)
         front_matter = format_front_matter(self._meta.to_dict())
         if front_matter:

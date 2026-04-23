@@ -7,7 +7,7 @@ input_fields:
   text: [id, data, info]
 output_format: md
 output_fields:
-  text: [data, info]
+  text: [id, data, info]
 config:
   - name: remove_ref
     type: bool
