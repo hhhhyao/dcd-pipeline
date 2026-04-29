@@ -22,7 +22,7 @@ simplified HTML using the extract pipeline.
 
 | Key          | Type   | Default | Description                                      |
 |--------------|--------|---------|--------------------------------------------------|
-| `remove_ref` | bool   | false   | Strip reference-style links from the output       |
+| `remove_ref` | bool   | true    | Strip reference-style links from the output       |
 | `out_format` | string | `"md"`  | Output format: `"md"` for markdown, `"html"` for simplified HTML |
 
 ## How it works

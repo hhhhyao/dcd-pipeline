@@ -32,6 +32,32 @@ try:
     from dcd_cli.pipe import PipeContext
 except ImportError:  # pragma: no cover - helper-only imports in unit tests
     PipeContext = Any  # type: ignore[misc,assignment]
+try:
+    from dcd_cli.pipe import set_links
+except ImportError:  # pragma: no cover - compatibility with older local dcd package
+
+    def set_links(info: dict[str, Any], modality: str, items: list[Any]) -> None:
+        defined = info.setdefault("__defined__", {})
+        if not isinstance(defined, dict):
+            defined = {}
+            info["__defined__"] = defined
+        links = defined.setdefault("links", {})
+        if not isinstance(links, dict):
+            links = {}
+            defined["links"] = links
+        entries = [
+            dict(item) if isinstance(item, dict) else {"id": str(item)}
+            for item in items
+            if item
+        ]
+        if entries:
+            links[modality] = entries
+        else:
+            links.pop(modality, None)
+            if not links:
+                defined.pop("links", None)
+                if not defined:
+                    info.pop("__defined__", None)
 
 log = logging.getLogger(__name__)
 
@@ -232,9 +258,9 @@ def build_text_info(
         "format": "html",
         "url": url,
         "title": title,
-        "image_ids": image_ids_for_article,
         "image_refs": image_refs_for_article or {},
     }
+    set_links(info, "images", image_ids_for_article)
 
     raw_url = entry.get("url")
     if raw_url not in (None, ""):
@@ -258,6 +284,7 @@ def build_image_info(
     img_meta: dict[str, Any],
     *,
     image_record: dict[str, Any],
+    text_id: str | None = None,
 ) -> dict[str, object]:
     """Build image-label info from image-stable metadata only."""
     merged = {**img_meta, **image_record}
@@ -268,6 +295,8 @@ def build_image_info(
         if value is None or value == "":
             continue
         info[key] = value
+    if text_id:
+        set_links(info, "text", [text_id])
     return info
 
 
@@ -530,6 +559,7 @@ def run_streaming(
                     img_info = build_image_info(
                         img_meta,
                         image_record=image_record,
+                        text_id=article_id,
                     )
 
                     imgdata_ids.append(image_id)

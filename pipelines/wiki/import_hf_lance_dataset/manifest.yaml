@@ -1,0 +1,78 @@
+name: stage0_5_import_hf_lance_dataset
+author: yao.lewei1@huawei.com
+description: >-
+  Import a wiki text+image Lance dataset from a Hugging Face dataset
+  repository into DCD.
+operation: ingest
+network: true
+tags: [wiki, ingest, huggingface, lance]
+output_fields:
+  text:
+    - id
+    - data
+    - info
+    - tags
+  image:
+    - id
+    - image_bytes
+    - data
+    - info
+    - tags
+config:
+  - name: hf_repo
+    type: str
+    default: ""
+    label: Hugging Face dataset repository id
+  - name: dataset_subdir
+    type: str
+    default: ""
+    label: Optional dataset path inside the repository
+  - name: revision
+    type: str
+    default: main
+    label: Hugging Face revision
+  - name: image_pairing_mode
+    type: select
+    default: id_join
+    label: How images.lance is paired with image_labels.lance
+    options:
+      - id_join
+      - row_order
+  - name: include_text
+    type: bool
+    default: true
+    label: Import text.lance
+  - name: include_images
+    type: bool
+    default: true
+    label: Import images.lance and image_labels.lance
+  - name: validate_duplicate_image_ids
+    type: bool
+    default: true
+    label: Validate duplicate image ids have consistent sha256 values when available
+  - name: text_batch_rows
+    type: int
+    default: 1024
+    label: Text rows per yielded batch
+  - name: image_batch_rows
+    type: int
+    default: 256
+    label: Image rows per yielded batch
+  - name: image_batch_bytes_mb
+    type: int
+    default: 256
+    label: Approximate image bytes per yielded batch in MiB
+  - name: max_text_rows
+    type: int
+    default: 0
+    label: Maximum text rows to import (0 = all)
+  - name: max_image_rows
+    type: int
+    default: 0
+    label: Maximum image rows to import (0 = all)
+secrets:
+  - HF_TOKEN
+resources:
+  cpus: 2
+  memory_mb: 8192
+  timeout_per_item: 14400

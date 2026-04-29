@@ -54,16 +54,11 @@ def test_filter_images_drops_small_known_images_and_updates_info() -> None:
             "info": ['{"format":"openai","image_ids":["keep.jpg","drop.jpg"]}'],
         },
         "image": {
-            "label_data": [
-                json.dumps({
-                    "id": "keep.jpg",
-                    "info": {"width": 100, "height": 100, "text_ids": ["1"]},
-                }),
-                json.dumps({
-                    "id": "drop.jpg",
-                    "info": {"width": 10, "height": 10, "text_ids": ["1"]},
-                }),
-            ],
+            "id": [["keep.jpg", "drop.jpg"]],
+            "info": [[
+                json.dumps({"width": 100, "height": 100, "text_ids": ["1"]}),
+                json.dumps({"width": 10, "height": 10, "text_ids": ["1"]}),
+            ]],
         },
     }
 
@@ -79,7 +74,8 @@ def test_filter_images_drops_small_known_images_and_updates_info() -> None:
         {"type": "image_url", "image_url": {"url": "images/keep.jpg"}},
         {"type": "text", "text": "B"},
     ]
-    assert info["image_ids"] == ["keep.jpg"]
+    assert info["__defined__"]["links"]["images"] == [{"id": "keep.jpg"}]
+    assert "image_ids" not in info
     assert info["filtered_small_images"] == 1
     assert info["format"] == "openai"
 
@@ -98,12 +94,8 @@ def test_filter_images_keeps_unknown_size_images() -> None:
             "info": ['{"format":"openai","image_ids":["unknown.jpg"]}'],
         },
         "image": {
-            "label_data": [
-                json.dumps({
-                    "id": "other.jpg",
-                    "info": {"width": 10, "height": 10, "text_ids": ["other"]},
-                }),
-            ],
+            "id": [["other.jpg"]],
+            "info": [[json.dumps({"width": 10, "height": 10, "text_ids": ["other"]})]],
         },
     }
 
@@ -115,7 +107,8 @@ def test_filter_images_keeps_unknown_size_images() -> None:
     content = json.loads(out["data"][0])[0]["content"]
     info = json.loads(out["info"][0])
     assert content == [{"type": "image_url", "image_url": {"url": "images/unknown.jpg"}}]
-    assert info["image_ids"] == ["unknown.jpg"]
+    assert info["__defined__"]["links"]["images"] == [{"id": "unknown.jpg"}]
+    assert "image_ids" not in info
     assert "filtered_small_images" not in info
 
 
@@ -127,12 +120,8 @@ def test_filter_images_drops_image_ids_when_no_images_remain() -> None:
             "info": ['{"format":"openai","image_ids":["drop.jpg"]}'],
         },
         "image": {
-            "label_data": [
-                json.dumps({
-                    "id": "drop.jpg",
-                    "info": {"width": 10, "height": 10, "text_ids": ["1"]},
-                }),
-            ],
+            "id": [["drop.jpg"]],
+            "info": [[json.dumps({"width": 10, "height": 10, "text_ids": ["1"]})]],
         },
     }
 
@@ -145,27 +134,30 @@ def test_filter_images_drops_image_ids_when_no_images_remain() -> None:
     info = json.loads(out["info"][0])
     assert content == []
     assert "image_ids" not in info
+    assert "__defined__" not in info or "links" not in info.get("__defined__", {})
     assert info["filtered_small_images"] == 1
 
 
-def test_filter_images_reads_label_data_records_with_json_info() -> None:
+def test_filter_images_uses_per_text_row_secondary_image_info() -> None:
     batch = {
         "text": {
-            "id": ["1"],
+            "id": ["1", "2"],
             "data": [
-                _payload([
-                    {"type": "image_url", "image_url": {"url": "images/drop.jpg"}},
-                ]),
+                _payload([{"type": "image_url", "image_url": {"url": "images/drop.jpg"}}]),
+                _payload([{"type": "image_url", "image_url": {"url": "images/keep.jpg"}}]),
             ],
-            "info": ['{"format":"openai","image_ids":["drop.jpg"]}'],
+            "info": [
+                '{"format":"openai","image_ids":["drop.jpg"]}',
+                '{"format":"openai","image_ids":["keep.jpg"]}',
+            ],
         },
         "image": {
-            "label_data": [
-                json.dumps({
-                    "id": "drop.jpg",
-                    "info": json.dumps({"width": 10, "height": 10}),
-                }),
-            ],
+            "id": [["drop.jpg"], ["keep.jpg"]],
+            "info": [[
+                json.dumps({"width": 10, "height": 10}),
+            ], [
+                json.dumps({"width": 100, "height": 100}),
+            ]],
         },
     }
 
@@ -174,8 +166,16 @@ def test_filter_images_reads_label_data_records_with_json_info() -> None:
         {"min_image_width": 20, "min_image_height": 20},
     )
 
-    content = json.loads(out["data"][0])[0]["content"]
-    info = json.loads(out["info"][0])
-    assert content == []
-    assert "image_ids" not in info
-    assert info["filtered_small_images"] == 1
+    first_content = json.loads(out["data"][0])[0]["content"]
+    first_info = json.loads(out["info"][0])
+    second_content = json.loads(out["data"][1])[0]["content"]
+    second_info = json.loads(out["info"][1])
+
+    assert first_content == []
+    assert "image_ids" not in first_info
+    assert "__defined__" not in first_info or "links" not in first_info.get("__defined__", {})
+    assert first_info["filtered_small_images"] == 1
+
+    assert second_content == [{"type": "image_url", "image_url": {"url": "images/keep.jpg"}}]
+    assert second_info["__defined__"]["links"]["images"] == [{"id": "keep.jpg"}]
+    assert "image_ids" not in second_info

@@ -38,13 +38,36 @@ ROOT = _bootstrap_paths()
 from dcd_cli.pipe import PipeContext  # noqa: E402
 from dcd_cli.pipe.run import call_fn, multimodal_from_dict  # noqa: E402
 import pipelines.wiki.stage4_filter_images as PIPE_MODULE  # noqa: E402
+try:
+    from dcd_cli.pipe import get_links  # noqa: E402
+except ImportError:  # pragma: no cover - compatibility with older local dcd package
+
+    def get_links(info: dict[str, Any] | None, modality: str) -> list[dict[str, str]]:
+        if not info:
+            return []
+        defined = info.get("__defined__")
+        if isinstance(defined, dict):
+            links = defined.get("links")
+            if isinstance(links, dict):
+                entries = links.get(modality)
+                if isinstance(entries, list) and entries:
+                    return [
+                        {"id": str(item["id"])}
+                        for item in entries
+                        if isinstance(item, dict) and item.get("id")
+                    ]
+        legacy_key = "image_ids" if modality == "images" else f"{modality}_ids"
+        legacy = info.get(legacy_key)
+        if isinstance(legacy, list):
+            return [{"id": str(item)} for item in legacy if item]
+        return []
 
 PIPE_NAME = "stage4_filter_images"
 pipe_map = PIPE_MODULE.map
 
 _WORKER_MAP = None
 _WORKER_CTX = None
-_WORKER_IMAGE_LABEL_DATA = None
+_WORKER_IMAGE_INFO = None
 
 
 def _build_table(out_batch: dict[str, list[Any]], schema: pa.Schema) -> pa.Table:
@@ -67,7 +90,7 @@ def _link_or_replace(src: Path, dst: Path) -> None:
     os.symlink(rel, dst)
 
 
-def _load_image_label_data_lookup(dataset_dir: Path) -> dict[str, str]:
+def _load_image_info_lookup(dataset_dir: Path) -> dict[str, str]:
     labels_path = dataset_dir / "image_labels.lance"
     if not labels_path.is_dir():
         return {}
@@ -78,10 +101,7 @@ def _load_image_label_data_lookup(dataset_dir: Path) -> dict[str, str]:
     for image_id, info_raw in zip(ids, infos, strict=True):
         if not image_id or info_raw in (None, ""):
             continue
-        out[str(image_id)] = json.dumps(
-            {"id": str(image_id), "info": info_raw},
-            ensure_ascii=False,
-        )
+        out[str(image_id)] = str(info_raw)
     return out
 
 
@@ -95,7 +115,9 @@ def _collect_image_ids(text_batch: dict[str, list[Any]]) -> list[str]:
             continue
         if not isinstance(info, dict):
             continue
-        for image_id in info.get("image_ids") or []:
+        row_ids: list[str] = []
+        row_ids.extend(link["id"] for link in get_links(info, "images"))
+        for image_id in row_ids:
             image_id = str(image_id)
             if image_id and image_id not in seen:
                 seen.add(image_id)
@@ -105,17 +127,27 @@ def _collect_image_ids(text_batch: dict[str, list[Any]]) -> list[str]:
 
 def _build_multimodal_batch(
     text_batch: dict[str, list[Any]],
-    image_label_data_lookup: dict[str, str],
+    image_info_lookup: dict[str, str],
 ) -> dict[str, dict[str, list[Any]]]:
-    image_ids = _collect_image_ids(text_batch)
+    image_ids_rows: list[list[str]] = []
+    image_info_rows: list[list[str | None]] = []
+
+    for info_raw in text_batch.get("info", []):
+        try:
+            info = json.loads(info_raw) if isinstance(info_raw, str) else info_raw
+        except json.JSONDecodeError:
+            info = {}
+        if not isinstance(info, dict):
+            info = {}
+        row_ids = _collect_image_ids({"info": [info]})
+        image_ids_rows.append(row_ids)
+        image_info_rows.append([image_info_lookup.get(image_id) for image_id in row_ids])
+
     return {
         "text": text_batch,
         "image": {
-            "label_data": [
-                image_label_data_lookup[image_id]
-                for image_id in image_ids
-                if image_id in image_label_data_lookup
-            ],
+            "id": image_ids_rows,
+            "info": image_info_rows,
         },
     }
 
@@ -139,7 +171,7 @@ def _worker_init(
     min_image_width: int,
     min_image_height: int,
 ) -> None:
-    global _WORKER_MAP, _WORKER_CTX, _WORKER_IMAGE_LABEL_DATA
+    global _WORKER_MAP, _WORKER_CTX, _WORKER_IMAGE_INFO
     root = Path(root_str)
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
@@ -165,12 +197,12 @@ def _worker_init(
         },
         volumes={"dataset": Path(dataset_dir_str)},
     )
-    _WORKER_IMAGE_LABEL_DATA = _load_image_label_data_lookup(Path(dataset_dir_str))
+    _WORKER_IMAGE_INFO = _load_image_info_lookup(Path(dataset_dir_str))
 
 
 def _worker_process(payload: tuple[int, dict[str, list[Any]]]) -> tuple[int, int, dict[str, list[Any]]]:
     idx, batch = payload
-    mm_batch = _build_multimodal_batch(batch, _WORKER_IMAGE_LABEL_DATA or {})
+    mm_batch = _build_multimodal_batch(batch, _WORKER_IMAGE_INFO or {})
     out_batch = _call_pipe_map(mm_batch, _WORKER_CTX)
     row_count = len(next(iter(out_batch.values()))) if out_batch else 0
     return idx, row_count, out_batch
@@ -214,7 +246,7 @@ def run(
     ds = lance.dataset(str(src_text))
     schema = ds.schema
     total = ds.count_rows()
-    image_label_data_lookup = _load_image_label_data_lookup(src_dataset_dir)
+    image_info_lookup = _load_image_info_lookup(src_dataset_dir)
 
     ctx = PipeContext(
         dataset=src_dataset_dir.name,
@@ -240,7 +272,7 @@ def run(
     first_batch_written = False
     if workers <= 1:
         for i, batch in _iter_batches(ds, batch_size):
-            mm_batch = _build_multimodal_batch(batch, image_label_data_lookup)
+            mm_batch = _build_multimodal_batch(batch, image_info_lookup)
             out_batch = _call_pipe_map(mm_batch, ctx)
             out_table = _build_table(out_batch, schema)
             mode = "overwrite" if not first_batch_written else "append"

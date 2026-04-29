@@ -110,7 +110,8 @@ def test_end_to_end_pipeline(tmp_path) -> None:
 
     assert 'src="images/img-1"' in text_row["data"]
     assert '_image_ref_id="img-1_refa"' in text_row["data"]
-    assert text_info["image_ids"] == ["img-1"]
+    assert "image_ids" not in text_info
+    assert text_info["__defined__"]["links"]["images"] == [{"id": "img-1"}]
     assert set(text_info["image_refs"]) == {"img-1_refa", "img-2_refb"}
     assert text_info["image_refs"]["img-1_refa"]["caption_text"] == "first"
     assert len(image_rows) == 3

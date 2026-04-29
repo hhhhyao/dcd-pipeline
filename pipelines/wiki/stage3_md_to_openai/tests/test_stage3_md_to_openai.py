@@ -188,11 +188,12 @@ def test_map_updates_info_format_counters_and_image_ids() -> None:
 
     assert info["format"] == "openai"
     assert info["title"] == "Keep Me"
-    assert info["image_ids"] == [
-        "part/hash/local.jpg",
-        "tiny.png",
-        "part/hash/wrapped.jpg",
+    assert info["__defined__"]["links"]["images"] == [
+        {"id": "part/hash/local.jpg"},
+        {"id": "tiny.png"},
+        {"id": "part/hash/wrapped.jpg"},
     ]
+    assert "image_ids" not in info
     assert "image_refs" not in info
     assert "filtered_small_images" not in info
     assert info["dropped_nonlocal_images"] == 2
@@ -223,5 +224,6 @@ def test_map_drops_empty_image_ids_when_no_local_images_survive() -> None:
     info = json.loads(out["info"][0])
 
     assert "image_ids" not in info
+    assert "__defined__" not in info or "links" not in info.get("__defined__", {})
     assert "image_refs" not in info
     assert info["dropped_nonlocal_images"] == 1

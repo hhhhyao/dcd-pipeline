@@ -11,7 +11,7 @@ output_fields:
 config:
   - name: remove_ref
     type: bool
-    default: false
+    default: true
     label: Remove references
   - name: out_format
     type: select

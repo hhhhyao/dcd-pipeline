@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -11,12 +12,60 @@ import lance
 
 from ops.lance_ops import LanceDatasetWriter, StageProgress, iter_batches, make_scanner
 from workflow.html_rewrite import dedupe_preserve_order, json_dumps
+from workflow.info_links_compat import iter_link_modalities, set_links
+
+LEGACY_LINK_KEYS = {
+    "image_ids",
+    "video_ids",
+    "pdf_ids",
+    "folder_ids",
+    "mesh_ids",
+    "point_cloud_ids",
+    "text_ids",
+    "audio_ids",
+    "rgbd_ids",
+    "pano_ids",
+}
 
 
 def _canonical_info_json(info: dict[str, Any]) -> str:
-    sanitized = dict(info)
+    sanitized = _info_without_links(info)
     sanitized.pop("info_addtional", None)
     return json.dumps(sanitized, ensure_ascii=False, sort_keys=True)
+
+
+def _info_without_links(info: dict[str, Any]) -> dict[str, Any]:
+    sanitized = deepcopy(info)
+    for key in LEGACY_LINK_KEYS:
+        sanitized.pop(key, None)
+
+    defined = sanitized.get("__defined__")
+    if isinstance(defined, dict):
+        defined.pop("links", None)
+        if not defined:
+            sanitized.pop("__defined__", None)
+    return sanitized
+
+
+def _merge_info_links(primary_info: dict[str, Any], infos: list[dict[str, Any]]) -> dict[str, Any]:
+    merged_info = _info_without_links(primary_info)
+    links_by_modality: dict[str, list[dict[str, Any]]] = {}
+    seen_by_modality: dict[str, set[str]] = {}
+
+    for info in infos:
+        for modality, entries in iter_link_modalities(info):
+            out_entries = links_by_modality.setdefault(modality, [])
+            seen = seen_by_modality.setdefault(modality, set())
+            for entry in entries:
+                key = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+                if key in seen:
+                    continue
+                seen.add(key)
+                out_entries.append(dict(entry))
+
+    for modality, entries in links_by_modality.items():
+        set_links(merged_info, modality, entries)
+    return merged_info
 
 
 def dedup_images_dataset(
@@ -116,7 +165,7 @@ def dedup_image_labels_dataset(
     warning_writer: Any,
     temp_dir: Path,
 ) -> dict[str, Any]:
-    """Deduplicate image_labels.lance while merging tags only."""
+    """Deduplicate image_labels.lance while merging tags and canonical links."""
     del write_flush_rows
     ds = lance.dataset(str(source_path))
     schema = ds.schema
@@ -168,6 +217,7 @@ def dedup_image_labels_dataset(
 
             first = group_rows[0]
             merged_tags: list[str] = []
+            infos_for_merge: list[dict[str, Any]] = []
             first_data = str(first.get("data") or "")
             try:
                 primary_info = json.loads(str(first.get("info") or "{}"))
@@ -176,6 +226,7 @@ def dedup_image_labels_dataset(
             if not isinstance(primary_info, dict):
                 primary_info = {}
             first_info_canonical = _canonical_info_json(primary_info)
+            infos_for_merge.append(primary_info)
 
             for row in group_rows:
                 tags = row.get("tags") or []
@@ -187,6 +238,7 @@ def dedup_image_labels_dataset(
                     info = {}
                 if not isinstance(info, dict):
                     info = {}
+                infos_for_merge.append(info)
                 current_info_canonical = _canonical_info_json(info)
                 if current_data != first_data or current_info_canonical != first_info_canonical:
                     counters["content_mismatch_warnings"] += 1
@@ -201,7 +253,7 @@ def dedup_image_labels_dataset(
 
             output_rows.append({
                 "id": image_id,
-                "info": json_dumps(primary_info),
+                "info": json_dumps(_merge_info_links(primary_info, infos_for_merge)),
                 "data": first_data,
                 "tags": dedupe_preserve_order(merged_tags),
             })

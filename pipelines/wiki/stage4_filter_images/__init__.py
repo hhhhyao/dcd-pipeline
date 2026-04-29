@@ -5,7 +5,33 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from dcd_cli.pipe import Batch, PipeContext
+from dcd_cli.pipe import Batch, MultimodalBatch, PipeContext
+try:
+    from dcd_cli.pipe import set_links
+except ImportError:  # pragma: no cover - compatibility with older local dcd package
+
+    def set_links(info: dict[str, Any], modality: str, items: list[Any]) -> None:
+        defined = info.setdefault("__defined__", {})
+        if not isinstance(defined, dict):
+            defined = {}
+            info["__defined__"] = defined
+        links = defined.setdefault("links", {})
+        if not isinstance(links, dict):
+            links = {}
+            defined["links"] = links
+        entries = [
+            dict(item) if isinstance(item, dict) else {"id": str(item)}
+            for item in items
+            if item
+        ]
+        if entries:
+            links[modality] = entries
+        else:
+            links.pop(modality, None)
+            if not links:
+                defined.pop("links", None)
+                if not defined:
+                    info.pop("__defined__", None)
 
 
 def _parse_openai_payload(data_raw: Any) -> tuple[list[dict[str, Any]], str]:
@@ -76,21 +102,20 @@ def _parse_json_obj(raw: Any) -> dict[str, Any]:
     return {}
 
 
-def _label_info_from_label_data(raw: Any) -> tuple[str | None, dict[str, Any]]:
-    label = _parse_json_obj(raw)
-    image_id = label.get("id")
-    info = label.get("info")
-    if info is not None:
-        return (str(image_id) if image_id else None, _parse_json_obj(info))
-    return (str(image_id) if image_id else None, label)
-
-
 def _build_image_size_index(
-    label_data: list[Any],
+    image_ids: list[Any],
+    image_info: list[Any],
 ) -> dict[str, tuple[int, int]]:
+    """Build an ``image_id -> (width, height)`` index for one text row.
+
+    Follows the current multimodal runner contract: secondary image rows
+    arrive as per-text-row list columns, with ``id`` implicitly present
+    and ``info`` explicitly requested by the manifest.
+    """
     size_index: dict[str, tuple[int, int]] = {}
-    for label_raw in label_data:
-        image_id, info = _label_info_from_label_data(label_raw)
+    for image_id_raw, info_raw in zip(image_ids, image_info, strict=True):
+        image_id = str(image_id_raw) if image_id_raw else None
+        info = _parse_json_obj(info_raw)
         _add_image_size(size_index, image_id, info)
     return size_index
 
@@ -150,20 +175,59 @@ def _filter_content_by_size(
     return (filtered_content, filtered_images)
 
 
-def _text_batch_from_prefixed(batch: Batch) -> Batch:
-    text_data = batch["text/data"]
-    keep_indices = [i for i, value in enumerate(text_data) if value is not None]
-    text_batch: Batch = {}
-    for key, values in batch.items():
-        if not key.startswith("text/"):
-            continue
-        column = key.split("/", 1)[1]
-        text_batch[column] = [values[i] for i in keep_indices]
-    return text_batch
+def _text_batch_from_input(batch: MultimodalBatch) -> Batch:
+    text_batch = batch["text"]
+    return {
+        str(column): list(values)
+        for column, values in text_batch.items()
+    }
+
+
+def _secondary_rows(
+    raw: Any,
+    row_count: int,
+) -> list[list[Any]]:
+    """Return the per-primary-row secondary lists from the current batch."""
+    if row_count <= 0:
+        return []
+    if not isinstance(raw, list):
+        return [[] for _ in range(row_count)]
+    return [
+        list(item) if isinstance(item, list) else []
+        for item in raw[:row_count]
+    ] + [[] for _ in range(max(0, row_count - len(raw)))]
+
+
+def _image_sizes_per_row(
+    batch: MultimodalBatch,
+    row_count: int,
+) -> list[dict[str, tuple[int, int]]]:
+    if row_count <= 0:
+        return []
+
+    image_batch = batch.get("image", {})
+    if not isinstance(image_batch, dict):
+        return [{} for _ in range(row_count)]
+
+    image_ids_rows = _secondary_rows(image_batch.get("id"), row_count)
+    image_info_rows = _secondary_rows(image_batch.get("info"), row_count)
+
+    return [
+        _build_image_size_index(
+            image_ids_rows[i] if i < len(image_ids_rows) else [],
+            image_info_rows[i] if i < len(image_info_rows) else [],
+        )
+        for i in range(row_count)
+    ]
+
+
+def _set_canonical_image_links(info: dict[str, Any], image_ids: list[str]) -> None:
+    info.pop("image_ids", None)
+    set_links(info, "images", image_ids)
 
 
 def map(
-    batch: Batch,
+    batch: MultimodalBatch,
     ctx: PipeContext,
 ) -> Batch:
     """Filter local image blocks by width/height metadata from the input batch."""
@@ -171,12 +235,9 @@ def map(
     min_image_width = max(0, int(config.get("min_image_width", 0)))
     min_image_height = max(0, int(config.get("min_image_height", 0)))
 
-    text_batch = _text_batch_from_prefixed(batch)
-    label_data = [
-        label for label in batch["image/label_data"]
-        if label is not None
-    ]
-    image_sizes = _build_image_size_index(label_data)
+    text_batch = _text_batch_from_input(batch)
+    row_count = len(text_batch.get("data", []))
+    image_sizes_per_row = _image_sizes_per_row(batch, row_count)
 
     data_out: list[str] = []
     info_out: list[str] = []
@@ -195,17 +256,14 @@ def map(
         content, role = _parse_openai_payload(data_raw)
         filtered_content, filtered_images = _filter_content_by_size(
             content,
-            image_sizes=image_sizes,
+            image_sizes=image_sizes_per_row[i] if i < len(image_sizes_per_row) else {},
             min_image_width=min_image_width,
             min_image_height=min_image_height,
         )
         data_out.append(_build_openai_payload(role, filtered_content))
         info["format"] = "openai"
         image_ids = _extract_image_ids(filtered_content)
-        if image_ids:
-            info["image_ids"] = image_ids
-        else:
-            info.pop("image_ids", None)
+        _set_canonical_image_links(info, image_ids)
         if filtered_images:
             info["filtered_small_images"] = filtered_images
         else:

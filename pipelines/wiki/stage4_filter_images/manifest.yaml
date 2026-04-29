@@ -8,10 +8,10 @@ network: false
 input_format: [json]
 input_fields:
   text: [id, data, info]
-  image: [label_data]
+  image: [info]
 output_format: json
 output_fields:
-  text: [data, info]
+  text: [id, data, info]
 config:
   - name: min_image_width
     type: int

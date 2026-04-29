@@ -11,7 +11,7 @@ input_fields:
   text: [id, data, info]
 output_format: json
 output_fields:
-  text: [data, info]
+  text: [id, data, info]
 config:
   - name: message_role
     type: str

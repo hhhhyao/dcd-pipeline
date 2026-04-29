@@ -7,6 +7,32 @@ import re
 from typing import Any
 
 from dcd_cli.pipe import PipeContext
+try:
+    from dcd_cli.pipe import set_links
+except ImportError:  # pragma: no cover - compatibility with older local dcd package
+
+    def set_links(info: dict[str, Any], modality: str, items: list[Any]) -> None:
+        defined = info.setdefault("__defined__", {})
+        if not isinstance(defined, dict):
+            defined = {}
+            info["__defined__"] = defined
+        links = defined.setdefault("links", {})
+        if not isinstance(links, dict):
+            links = {}
+            defined["links"] = links
+        entries = [
+            dict(item) if isinstance(item, dict) else {"id": str(item)}
+            for item in items
+            if item
+        ]
+        if entries:
+            links[modality] = entries
+        else:
+            links.pop(modality, None)
+            if not links:
+                defined.pop("links", None)
+                if not defined:
+                    info.pop("__defined__", None)
 
 FRONT_MATTER_RE = re.compile(
     r"\A---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n+)?",
@@ -198,6 +224,11 @@ def _extract_image_ids(parts: list[dict[str, Any]]) -> list[str]:
     return image_ids
 
 
+def _set_canonical_image_links(info: dict[str, Any], image_ids: list[str]) -> None:
+    info.pop("image_ids", None)
+    set_links(info, "images", image_ids)
+
+
 def map(batch: dict[str, list[Any]], ctx: PipeContext) -> dict[str, list[Any]]:
     """Encode each markdown ``data`` cell as a top-level OpenAI message array."""
     config = ctx.config or {}
@@ -222,10 +253,7 @@ def map(batch: dict[str, list[Any]], ctx: PipeContext) -> dict[str, list[Any]]:
 
         info["format"] = "openai"
         image_ids = _extract_image_ids(parts)
-        if image_ids:
-            info["image_ids"] = image_ids
-        else:
-            info.pop("image_ids", None)
+        _set_canonical_image_links(info, image_ids)
         if dropped_nonlocal:
             info["dropped_nonlocal_images"] = dropped_nonlocal
         else:

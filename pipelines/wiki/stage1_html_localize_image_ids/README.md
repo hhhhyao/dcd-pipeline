@@ -2,6 +2,11 @@
 
 Production ingest pipe for wiki Stage 1.
 
+This pipe currently stays on the legacy ingest path intentionally:
+its manifest does not declare `output_fields`, so the new DCD runner
+continues to provide `ctx.output_dir` and lets the pipe materialize the
+dataset layout itself.
+
 This pipe rewrites HTML using `text.info.image_refs`. It does not read URL or
 caption metadata from `image_labels.lance`.
 
@@ -36,12 +41,15 @@ The pipe writes these artifacts to `ctx.output_dir`:
 2. Match HTML `<img src=...>` values against `image_refs[*].image_url_ori`.
 3. Rewrite matched image tags to `src="images/<image_id>"` and add
    `_image_ref_id="<image_ref_id>"`.
-4. Rewrite `info.image_ids` to the matched image ids while preserving
-   `info.image_refs`.
+4. Rewrite `info.__defined__.links.images` to the matched image ids while
+   preserving `info.image_refs`; legacy `info.image_ids` input is still read as
+   a fallback but is not written back.
 5. Emit sidecar records for missing HTML URLs and unmatched or invalid image refs.
 6. Link `images.lance` into the output directory without materializing image bytes.
-7. Deduplicate `image_labels.lance` by `id`: first row wins for `info` and `data`,
-   tags are merged in first-seen order, and non-tag content mismatches emit warnings.
+7. Deduplicate `image_labels.lance` by `id`: first row wins for non-link `info`
+   and `data`, tags are merged in first-seen order, canonical
+   `info.__defined__.links` entries are merged across duplicates, and non-link
+   content mismatches emit warnings.
 8. Compact selected output tables. `images` is skipped because it is a symlink.
 
 The rewritten `text.lance` and deduplicated `image_labels.lance` use the

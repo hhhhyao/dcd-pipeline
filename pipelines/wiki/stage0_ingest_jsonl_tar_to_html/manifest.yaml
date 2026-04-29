@@ -5,10 +5,6 @@ description: >-
   with text, images, and image_labels tables.
 operation: ingest
 network: false
-output_fields:
-  text: [id, info, data, tags]
-  image: [id, image_bytes, sha256]
-  image_labels: [id, info, data, tags]
 tags: [wiki, ingest, html, lance]
 config:
   - name: source_dir

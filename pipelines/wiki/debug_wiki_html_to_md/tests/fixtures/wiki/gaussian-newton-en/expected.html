@@ -1,0 +1,231 @@
+
+
+<figure><a href="https://en.wikipedia.org/wiki/File:Regression_pic_assymetrique.gif"><img src="//upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Regression_pic_assymetrique.gif/500px-Regression_pic_assymetrique.gif" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Regression_pic_assymetrique.gif/500px-Regression_pic_assymetrique.gif 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Regression_pic_assymetrique.gif/610px-Regression_pic_assymetrique.gif 2x"></a><figcaption>Fitting of a noisy curve by an asymmetrical peak model <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/16f9fd1aa438e036b8830f6aa6a6851b82da87f3" alt="{\displaystyle f_{\beta }(x)}"> with parameters <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/7ed48a5e36207156fb792fa79d29925d2f7901e8" alt="{\displaystyle \beta }"> by mimimizing the sum of squared residuals <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/256ad33fac205b05fad7ed56b5e6845223517ff8" alt="{\displaystyle r_{i}(\beta )=y_{i}-f_{\beta }(x_{i})}"> at grid points <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e87000dd6142b81d041896a30fe58f0c3acb2158" alt="{\displaystyle x_{i}}">, using the Gauss–Newton algorithm. <br> Top: Raw data and model.<br> Bottom: Evolution of the normalised sum of the squares of the errors.</figcaption></figure>
+<p>The <b>Gauss–Newton algorithm</b> is used to solve non-linear least squares problems, which is equivalent to minimizing a sum of squared function values. It is an extension of Newton's method for finding a minimum of a non-linear function. Since a sum of squares must be nonnegative, the algorithm can be viewed as using Newton's method to iteratively approximate zeroes of the components of the sum, and thus minimizing the sum. In this sense, the algorithm is also an effective method for solving overdetermined systems of equations. It has the advantage that second derivatives, which can be challenging to compute, are not required.<sup>[1]</sup>
+</p><p>Non-linear least squares problems arise, for instance, in non-linear regression, where parameters in a model are sought such that the model is in good agreement with available observations.
+</p><p>The method is named after the mathematicians Carl Friedrich Gauss and Isaac Newton, and first appeared in Gauss's 1809 work <i>Theoria motus corporum coelestium in sectionibus conicis solem ambientum</i>.<sup>[2]</sup>
+</p>
+
+<h2>Description</h2>
+<p>Given <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/0a07d98bb302f3856cbabc47b2b9016692e3f7bc" alt="{\displaystyle m}"> functions <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/22dd0cefff2e5f9187e3b08602ce5a1240ab6df6" alt="{\displaystyle {\textbf {r}}=(r_{1},\ldots ,r_{m})}"> (often called residuals) of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a601995d55609f2d9f5e233e36fbe9ea26011b3b" alt="{\displaystyle n}"> variables <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/6119f53601ffdd541e512b3edf053233f9e464e3" alt="{\displaystyle {\boldsymbol {\beta }}=(\beta _{1},\ldots \beta _{n}),}"> with <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/875ce5d1cda90f4a9cb43ae48c45ba8f2c7be065" alt="{\displaystyle m\geq n,}"> the Gauss–Newton algorithm iteratively finds the value of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/7ed48a5e36207156fb792fa79d29925d2f7901e8" alt="{\displaystyle \beta }"> that minimize the sum of squares<sup>[3]</sup>
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/ff6dc11e6b3537ca2ff4eec9e9a7414366c63185" alt="{\displaystyle S({\boldsymbol {\beta }})=\sum _{i=1}^{m}r_{i}({\boldsymbol {\beta }})^{2}.}">
+</p><p>Starting with an initial guess <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/67473ec5b5a0402031766799c8ae89f34ffd0329" alt="{\displaystyle {\boldsymbol {\beta }}^{(0)}}"> for the minimum, the method proceeds by the iterations
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5ed10f97b949db918f59270e82f82e1cdb32ad86" alt="{\displaystyle {\boldsymbol {\beta }}^{(s+1)}={\boldsymbol {\beta }}^{(s)}-\left(\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {J_{r}} \right)^{-1}\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right),}">
+</p><p>where, if <b>r</b> and <i><b>β</b></i> are column vectors, the entries of the Jacobian matrix are
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/327f61b4c1e0b08bed40dd6160899e5ebaa3789c" alt="{\displaystyle \left(\mathbf {J_{r}} \right)_{ij}={\frac {\partial r_{i}\left({\boldsymbol {\beta }}^{(s)}\right)}{\partial \beta _{j}}},}">
+</p><p>and the symbol <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/1e1f40f2505e83e97ba9e1a0a996ab722af9f192" alt="{\displaystyle ^{\operatorname {T} }}"> denotes the matrix transpose.
+</p><p>At each iteration, the update <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/fb59683fabb128a065082b5a0c06d25517b18722" alt="{\displaystyle \Delta ={\boldsymbol {\beta }}^{(s+1)}-{\boldsymbol {\beta }}^{(s)}}"> can be found by rearranging the previous equation in the following two steps:
+</p>
+<ul><li><img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8b0751590c5df0429730d89b4b5b2a681f14057d" alt="{\displaystyle \Delta =-\left(\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {J_{r}} \right)^{-1}\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right)}"></li>
+<li><img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/785c2cacb0878a18ae668370ff6ea5ff018cc026" alt="{\displaystyle \mathbf {J_{r}} ^{\operatorname {T} }\mathbf {J_{r}} \Delta =-\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right)}"></li></ul>
+<p>With substitutions <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5a27ef7cc27eaa1b5b639289aca07ac0cce7c823" alt="{\textstyle A=\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {J_{r}} }">, <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a687212c0d95f8f18b890310cfd250405808a2fd" alt="{\displaystyle \mathbf {b} =-\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right)}">, and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/572e3676879803ae90bd4aa04f9ce429f1f45342" alt="{\displaystyle \mathbf {x} =\Delta }">, this turns into the conventional matrix equation of form <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/45d894430af69e29d6dda5aacbf4bb19336226a0" alt="{\displaystyle A\mathbf {x} =\mathbf {b} }">, which can then be solved in a variety of methods (see Notes).
+</p><p>If <i>m</i> = <i>n</i>, the iteration simplifies to
+</p><p><img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/97ad655d81bb167b51e1cf7d13579e67610da76c" alt="{\displaystyle {\boldsymbol {\beta }}^{(s+1)}={\boldsymbol {\beta }}^{(s)}-\left(\mathbf {J_{r}} \right)^{-1}\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right),}">
+</p><p>which is a direct generalization of Newton's method in one dimension.
+</p><p>In data fitting, where the goal is to find the parameters <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/702cafc420cc00c54896f6d125112820956aaf6b" alt="{\displaystyle {\boldsymbol {\beta }}}"> such that a given model function <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5e89216bb4a08cc9755045f0a38c1b17e8c0e84d" alt="{\displaystyle \mathbf {f} (\mathbf {x} ,{\boldsymbol {\beta }})}"> best fits some data points <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d6dbb919b91ccacf17ed47898048428a1baf9703" alt="{\displaystyle (x_{i},y_{i})}">, the functions <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a0b6d651eaf432dbf1f106021c8bb499ae83fd1f" alt="{\displaystyle r_{i}}">are the residuals:
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/0459e6e4eaad166e557db39dbfb64fef7e86dc1f" alt="{\displaystyle r_{i}({\boldsymbol {\beta }})=y_{i}-f\left(x_{i},{\boldsymbol {\beta }}\right).}">
+</p><p>Then, the Gauss–Newton method can be expressed in terms of the Jacobian <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/0c3f2f27b3fa15dca90fa722bd84f53113935f38" alt="{\displaystyle \mathbf {J_{f}} =-\mathbf {J_{r}} }"> of the function <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/dc6194e680a4e7c521f2178c50eea302843a852d" alt="{\displaystyle \mathbf {f} }"> as
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/41515fb47a56a0575efa229ef07c41f8ff2ee21e" alt="{\displaystyle {\boldsymbol {\beta }}^{(s+1)}={\boldsymbol {\beta }}^{(s)}+\left(\mathbf {J_{f}} ^{\operatorname {T} }\mathbf {J_{f}} \right)^{-1}\mathbf {J_{f}} ^{\operatorname {T} }\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right).}">
+</p><p>Note that <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b5ae1ae9090659613e4010d9cf7f44886dd01ee1" alt="{\displaystyle \left(\mathbf {J_{f}} ^{\operatorname {T} }\mathbf {J_{f}} \right)^{-1}\mathbf {J_{f}} ^{\operatorname {T} }}"> is the left pseudoinverse of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/690b2c8a455846c3e47e6b6af33fec29271ffd50" alt="{\displaystyle \mathbf {J_{f}} }">.
+</p>
+<h2>Notes</h2>
+<p>The assumption <i>m</i> ≥ <i>n</i> in the algorithm statement is necessary, as otherwise the matrix <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e6982b87db76c583de4baa094921bcece707897c" alt="{\displaystyle \mathbf {J_{r}} ^{T}\mathbf {J_{r}} }"> is not invertible and the normal equations cannot be solved (at least uniquely).
+</p><p>The Gauss–Newton algorithm can be derived by linearly approximating the vector of functions <i>r</i><sub><i>i</i></sub>. Using Taylor's theorem, we can write at every iteration:
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/f983a39cc671e1936b0ce9b816348372b665dfc6" alt="{\displaystyle \mathbf {r} ({\boldsymbol {\beta }})\approx \mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right)+\mathbf {J_{r}} \left({\boldsymbol {\beta }}^{(s)}\right)\Delta }">
+</p><p>with <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5b597a9cc96317c9c862858b7794fdd674d9db0f" alt="{\displaystyle \Delta ={\boldsymbol {\beta }}-{\boldsymbol {\beta }}^{(s)}}">. The task of finding <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/32769037c408874e1890f77554c65f39c523ebe2" alt="{\displaystyle \Delta }"> minimizing the sum of squares of the right-hand side; i.e.,
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/066bcae2bc2078ff3ce0eef84da56b10d6399514" alt="{\displaystyle \min \left\|\mathbf {r} \left({\boldsymbol {\beta }}^{(s)}\right)+\mathbf {J_{r}} \left({\boldsymbol {\beta }}^{(s)}\right)\Delta \right\|_{2}^{2},}">
+</p><p>is a linear least-squares problem, which can be solved explicitly, yielding the normal equations in the algorithm.
+</p><p>The normal equations are <i>n</i> simultaneous linear equations in the unknown increments <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/32769037c408874e1890f77554c65f39c523ebe2" alt="{\displaystyle \Delta }">. They may be solved in one step, using Cholesky decomposition, or, better, the QR factorization of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d1f8e32ecc7c8ffb7aad8e6a4471f38d9419e823" alt="{\displaystyle \mathbf {J_{r}} }">. For large systems, an iterative method, such as the conjugate gradient method, may be more efficient. If there is a linear dependence between columns of <b>J</b><sub><b>r</b></sub>, the iterations will fail, as <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e6982b87db76c583de4baa094921bcece707897c" alt="{\displaystyle \mathbf {J_{r}} ^{T}\mathbf {J_{r}} }">  becomes singular.
+</p><p>When <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/eca0f46511c4c986c48b254073732c0bd98ae0c1" alt="{\displaystyle \mathbf {r} }"> is complex <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/2a019a6f94909dfc5894b21f8455dd0a80b2dfbf" alt="{\displaystyle \mathbf {r} :\mathbb {C} ^{n}\to \mathbb {C} }"> the conjugate form should be used: <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/aaee942f9ff24287420678f82ef2f1758448a5ef" alt="{\displaystyle \left({\overline {\mathbf {J_{r}} }}^{\operatorname {T} }\mathbf {J_{r}} \right)^{-1}{\overline {\mathbf {J_{r}} }}^{\operatorname {T} }}">.
+</p>
+<h2>Example</h2>
+<figure><a href="https://en.wikipedia.org/wiki/File:Gauss_Newton_illustration.png"><img src="//upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Gauss_Newton_illustration.png/500px-Gauss_Newton_illustration.png" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Gauss_Newton_illustration.png/500px-Gauss_Newton_illustration.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Gauss_Newton_illustration.png/960px-Gauss_Newton_illustration.png 2x"></a><figcaption>Calculated curve obtained with <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/39e665adf1b1b5c1b85cf8a34cc1c3212ba7a7ac" alt="{\displaystyle {\hat {\beta }}_{1}=0.362}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/6423b44e84a378fc6dcdf77e66641d3cbe831233" alt="{\displaystyle {\hat {\beta }}_{2}=0.556}"> (in blue) versus the observed data (in red)</figcaption></figure>
+<p>In this example, the Gauss–Newton algorithm will be used to fit a model to some data by minimizing the sum of squares of errors between the data and model's predictions.
+</p><p>In a biology experiment studying the relation between substrate concentration [<i>S</i>] and reaction rate in an enzyme-mediated reaction, the data in the following table were obtained. 
+</p>
+<table>
+<tbody><tr>
+<th>i
+</th>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7
+</td></tr>
+<tr>
+<th>[<i>S</i>]
+</th>
+<td>0.038</td>
+<td>0.194</td>
+<td>0.425</td>
+<td>0.626</td>
+<td>1.253</td>
+<td>2.500</td>
+<td>3.740
+</td></tr>
+<tr>
+<th>Rate
+</th>
+<td>0.050</td>
+<td>0.127</td>
+<td>0.094</td>
+<td>0.2122</td>
+<td>0.2729</td>
+<td>0.2665</td>
+<td>0.3317
+</td></tr></tbody></table>
+<p>It is desired to find a curve (model function) of the form
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5764b67f40bd291ea2632e5d846c91231c32783e" alt="{\displaystyle {\text{rate}}={\frac {V_{\text{max}}\cdot [S]}{K_{M}+[S]}}}">
+</p><p>that fits best the data in the least-squares sense, with the parameters <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/550aaeaf825bba56d6f276d151e6830e5ee53f37" alt="{\displaystyle V_{\text{max}}}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/14296e7a6cf6d829e6dd8bbb40421855edc4de67" alt="{\displaystyle K_{M}}"> to be determined.
+</p><p>Denote by <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e87000dd6142b81d041896a30fe58f0c3acb2158" alt="{\displaystyle x_{i}}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/67d30d30b6c2dbe4d6f150d699de040937ecc95f" alt="{\displaystyle y_{i}}"> the values of [<i>S</i>] and <b>rate</b> respectively, with <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/995884ca28a8f00c8d02e359c9bc4a8e7a2f88d3" alt="{\displaystyle i=1,\dots ,7}">. Let <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/49523cb91c651aed965298d5b1bd0a2f2e6f929c" alt="{\displaystyle \beta _{1}=V_{\text{max}}}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/279d79bca38285f2329a0dbd96ac108263f2e87c" alt="{\displaystyle \beta _{2}=K_{M}}">. We will find <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/eeeccd8b585b819e38f9c1fe5e9816a3ea01804c" alt="{\displaystyle \beta _{1}}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8d30285b40d7488ae6caef3beb7106142869fbea" alt="{\displaystyle \beta _{2}}"> such that the sum of squares of the residuals
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e18da10ff242f7529fcc4c99a676b49ba0312bcf" alt="{\displaystyle r_{i}=y_{i}-{\frac {\beta _{1}x_{i}}{\beta _{2}+x_{i}}},\quad (i=1,\dots ,7)}">
+</p><p>is minimized.
+</p><p>The Jacobian <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d1f8e32ecc7c8ffb7aad8e6a4471f38d9419e823" alt="{\displaystyle \mathbf {J_{r}} }"> of the vector of residuals <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a0b6d651eaf432dbf1f106021c8bb499ae83fd1f" alt="{\displaystyle r_{i}}"> with respect to the unknowns <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/83edf0558c67ad56ca5c05096b550bd733d62c4b" alt="{\displaystyle \beta _{j}}"> is a <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/7f1b0aa3ac2a8b159c9e51f75f2e0ec8880850d9" alt="{\displaystyle 7\times 2}"> matrix with the <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/add78d8608ad86e54951b8c8bd6c8d8416533d20" alt="{\displaystyle i}">-th row having the entries
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d482bfc6f2e47f42423c88e7855b9ee1b1d37acf" alt="{\displaystyle {\frac {\partial r_{i}}{\partial \beta _{1}}}=-{\frac {x_{i}}{\beta _{2}+x_{i}}};\quad {\frac {\partial r_{i}}{\partial \beta _{2}}}={\frac {\beta _{1}\cdot x_{i}}{\left(\beta _{2}+x_{i}\right)^{2}}}.}">
+</p><p>Starting with the initial estimates of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a9128650e42aaa397b101eba539f911718afeea0" alt="{\displaystyle \beta _{1}=0.9}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/6854c0a3682ffff3079ebd553df000b94637a705" alt="{\displaystyle \beta _{2}=0.2}">, after five iterations of the Gauss–Newton algorithm, the optimal values <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/39e665adf1b1b5c1b85cf8a34cc1c3212ba7a7ac" alt="{\displaystyle {\hat {\beta }}_{1}=0.362}"> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/6423b44e84a378fc6dcdf77e66641d3cbe831233" alt="{\displaystyle {\hat {\beta }}_{2}=0.556}"> are obtained. The sum of squares of residuals decreased from the initial value of 1.445 to 0.00784 after the fifth iteration. The plot in the figure on the right shows the curve determined by the model for the optimal parameters with the observed data.
+</p>
+<h2>Convergence properties</h2>
+<p>The Gauss-Newton iteration is guaranteed to converge toward a local minimum point <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/efdb50e00928e4013750a476dab75eeb3cbd5799" alt="{\displaystyle {\hat {\beta }}}"> under 4 conditions:<sup>[4]</sup> The functions <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/248a4aad71132de14daac67274639c3c3186daba" alt="{\displaystyle r_{1},\ldots ,r_{m}}"> are twice continuously differentiable in an open convex set <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/069a1b22c7b232b20cc72ca1f807addda5703be5" alt="{\displaystyle D\ni {\hat {\beta }}}">, the Jacobian <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/2c0464e47c051d306b995c8a3f5def623cc4d17d" alt="{\displaystyle \mathbf {J} _{\mathbf {r} }({\hat {\beta }})}"> is of full column rank, the initial iterate <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/c31ab0f6ea90f76e0aeca1b2afbdba54c6f96134" alt="{\displaystyle \beta ^{(0)}}"> is near <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/efdb50e00928e4013750a476dab75eeb3cbd5799" alt="{\displaystyle {\hat {\beta }}}">, and the local minimum value <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/01b382530c6db9e4156872930e7d904a2fa077c8" alt="{\displaystyle |S({\hat {\beta }})|}"> is small.  The convergence is quadratic if <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/c11215a2b3efdc6e7bda36be6cc7faa889adfe28" alt="{\displaystyle |S({\hat {\beta }})|=0}">.
+</p><p>It can be shown<sup>[5]</sup> that the increment Δ is a descent direction for <i>S</i>, and, if the algorithm converges, then the limit is a stationary point of <i>S</i>. For large minimum value <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/01b382530c6db9e4156872930e7d904a2fa077c8" alt="{\displaystyle |S({\hat {\beta }})|}">, however, convergence is not guaranteed, not even local convergence as in Newton's method, or convergence under the usual Wolfe conditions.<sup>[6]</sup>
+</p><p>The rate of convergence of the Gauss–Newton algorithm can approach quadratic.<sup>[7]</sup> The algorithm may converge slowly or not at all if the initial guess is far from the minimum or the matrix <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/cc3bb1f86a891b42f8c98c4e234ce882ab5dc177" alt="{\displaystyle \mathbf {J_{r}^{\operatorname {T} }J_{r}} }"> is ill-conditioned.  For example, consider the problem with <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b32de1b0dc05f6e525ad6a3e8ddeeb4321fd79e5" alt="{\displaystyle m=2}"> equations and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d9ec7e1edc2e6d98f5aec2a39ae5f1c99d1e1425" alt="{\displaystyle n=1}"> variable, given by
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/96ab3c36eaef986132cbc4be52898e4c7d678b5c" alt="{\displaystyle {\begin{aligned}r_{1}(\beta )&amp;=\beta +1,\\r_{2}(\beta )&amp;=\lambda \beta ^{2}+\beta -1.\end{aligned}}}">
+</p><p>For <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b88fbafcfc8ee3c878919582474a71c85b88b9f3" alt="{\displaystyle \lambda &lt;1}">, <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/60b5e78663eba7ba08e0dd4915251e6261f4f35c" alt="{\displaystyle \beta =0}"> is a local optimum. If <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/00c4bba30544017fe76932de5a4e25adb5512d95" alt="{\displaystyle \lambda =0}">, then the problem is in fact linear and the method finds the optimum in one iteration. If |λ| &lt; 1, then the method converges linearly and the error decreases asymptotically with a factor |λ| at every iteration. However, if |λ| &gt; 1, then the method does not even converge locally.<sup>[8]</sup>
+</p>
+<h2>Solving overdetermined systems of equations</h2>
+<p>The Gauss-Newton iteration
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/55b6e87b35b101302ecebb92a315657673112845" alt="{\displaystyle \mathbf {x} ^{(k+1)}=\mathbf {x} ^{(k)}-J(\mathbf {x} ^{(k)})^{\dagger }\mathbf {f} (\mathbf {x} ^{(k)})\,,\quad k=0,1,\ldots }">
+is an effective method for solving  overdetermined systems of equations in the form of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b459dc0163aa09c337e5d9782f680b2c146ad21a" alt="{\displaystyle \mathbf {f} (\mathbf {x} )=\mathbf {0} }"> with
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/502a33eb4a827d62aac4489b887c8310fef7f0cf" alt="{\displaystyle \mathbf {f} (\mathbf {x} )={\begin{bmatrix}f_{1}(x_{1},\ldots ,x_{n})\\\vdots \\f_{m}(x_{1},\ldots ,x_{n})\end{bmatrix}}}">
+and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/637039c4a193f33fee72ebfeb6cb003593696160" alt="{\displaystyle m&gt;n}"> where <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/157054a5a9b32817b1c196f401d15b193bf57629" alt="{\displaystyle J(\mathbf {x} )^{\dagger }}"> is the Moore-Penrose inverse (also known as pseudoinverse) of the Jacobian matrix <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/c7c54c83c82ca4352a4b991a2b520016a634e794" alt="{\displaystyle J(\mathbf {x} )}"> of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/98a7fa5ce91d1b349f9da68147dc3db20ad3763a" alt="{\displaystyle \mathbf {f} (\mathbf {x} )}">. 
+It can be considered an extension of Newton's method and enjoys the same local quadratic convergence <sup>[4]</sup> toward isolated regular solutions. 
+</p><p>If the solution doesn't exist but the initial iterate <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/420304397f5d97b8e25a6954a2016c515fb4222b" alt="{\displaystyle \mathbf {x} ^{(0)}}"> is near a point <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/223ab801bf3d55042d6917c3cfedff315c0b1187" alt="{\displaystyle {\hat {\mathbf {x} }}=({\hat {x}}_{1},\ldots ,{\hat {x}}_{n})}"> at which the sum of squares <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5ad486550fc6acff08cd4110b49a08a76e20eeba" alt="{\textstyle \sum _{i=1}^{m}|f_{i}(x_{1},\ldots ,x_{n})|^{2}\equiv \|\mathbf {f} (\mathbf {x} )\|_{2}^{2}}"> reaches a small local minimum, the Gauss-Newton iteration linearly converges to <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8a5451354f837d5d89774e1de386b44a903d929d" alt="{\displaystyle {\hat {\mathbf {x} }}}">. The point <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8a5451354f837d5d89774e1de386b44a903d929d" alt="{\displaystyle {\hat {\mathbf {x} }}}"> is often called a least squares solution of the overdetermined system.
+</p>
+<h2>Derivation from Newton's method</h2>
+<p>In what follows, the Gauss–Newton algorithm will be derived from Newton's method for function optimization via an approximation. As a consequence, the rate of convergence of the Gauss–Newton algorithm can be quadratic under certain regularity conditions. In general (under weaker conditions), the convergence rate is linear.<sup>[9]</sup>
+</p><p>The recurrence relation for Newton's method for minimizing a function <i>S</i> of parameters <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/702cafc420cc00c54896f6d125112820956aaf6b" alt="{\displaystyle {\boldsymbol {\beta }}}"> is
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/752962d068657cf84c037133f981b7453780359d" alt="{\displaystyle {\boldsymbol {\beta }}^{(s+1)}={\boldsymbol {\beta }}^{(s)}-\mathbf {H} ^{-1}\mathbf {g} ,}">
+</p><p>where <b>g</b> denotes the gradient vector of <i>S</i>, and <b>H</b> denotes the Hessian matrix of <i>S</i>.
+</p><p>Since <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/6169497f233e8a646f818419051463baa9d0c7fc" alt="{\textstyle S=\sum _{i=1}^{m}r_{i}^{2}}">, the gradient is given by
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/96dd841f1852efe035d9d39a6da2557f03633048" alt="{\displaystyle g_{j}=2\sum _{i=1}^{m}r_{i}{\frac {\partial r_{i}}{\partial \beta _{j}}}.}">
+</p><p>Elements of the Hessian are calculated by differentiating the gradient elements, <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/ccc0c1f707e4786c1121db1ba0a608fe85a94e2d" alt="{\displaystyle g_{j}}">, with respect to <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/026079ab88c28912592bb6e6d2a096f8253a5fba" alt="{\displaystyle \beta _{k}}">:
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/087b42a7146541cefd8c502b7474efe12a1c74f6" alt="{\displaystyle H_{jk}=2\sum _{i=1}^{m}\left({\frac {\partial r_{i}}{\partial \beta _{j}}}{\frac {\partial r_{i}}{\partial \beta _{k}}}+r_{i}{\frac {\partial ^{2}r_{i}}{\partial \beta _{j}\partial \beta _{k}}}\right).}">
+</p><p>The Gauss–Newton method is obtained by ignoring the second-order derivative terms (the second term in this expression). That is, the Hessian is approximated by
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8681eedb61b7434e89586c44012eddbf0b683001" alt="{\displaystyle H_{jk}\approx 2\sum _{i=1}^{m}J_{ij}J_{ik},}">
+</p><p>where <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/24dc397c11705d0cb10f0ac228b96e76126dcbf9" alt="{\textstyle J_{ij}={\partial r_{i}}/{\partial \beta _{j}}}"> are entries of the Jacobian <b>J<sub>r</sub></b>. Note that when the exact hessian is evaluated near an exact fit we have near-zero <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a0b6d651eaf432dbf1f106021c8bb499ae83fd1f" alt="{\displaystyle r_{i}}">, so the second term becomes near-zero as well, which justifies the approximation. The gradient and the approximate Hessian can be written in matrix notation as
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/5ba6dd315290725a7cbc2aaabfca994046e481af" alt="{\displaystyle \mathbf {g} =2{\mathbf {J} _{\mathbf {r} }}^{\operatorname {T} }\mathbf {r} ,\quad \mathbf {H} \approx 2{\mathbf {J} _{\mathbf {r} }}^{\operatorname {T} }\mathbf {J_{r}} .}">
+</p><p>These expressions are substituted into the recurrence relation above to obtain the operational equations
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/e1b7620b16305b455868c6aaa34d366c680bb84f" alt="{\displaystyle {\boldsymbol {\beta }}^{(s+1)}={\boldsymbol {\beta }}^{(s)}+\Delta ;\quad \Delta =-\left(\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {J_{r}} \right)^{-1}\mathbf {J_{r}} ^{\operatorname {T} }\mathbf {r} .}">
+</p><p>Convergence of the Gauss–Newton method is not guaranteed in all instances. The approximation
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/d087e3a5587fe8a4d5d5f80a5201e2325cc34859" alt="{\displaystyle \left|r_{i}{\frac {\partial ^{2}r_{i}}{\partial \beta _{j}\partial \beta _{k}}}\right|\ll \left|{\frac {\partial r_{i}}{\partial \beta _{j}}}{\frac {\partial r_{i}}{\partial \beta _{k}}}\right|}">
+</p><p>that needs to hold to be able to ignore the second-order derivative terms may be valid in two cases, for which convergence is to be expected:<sup>[10]</sup>
+</p>
+<ol><li>The function values <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/a0b6d651eaf432dbf1f106021c8bb499ae83fd1f" alt="{\displaystyle r_{i}}"> are small in magnitude, at least around the minimum.</li>
+<li>The functions are only "mildly" nonlinear, so that <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8144ebeefc0b1e76699a1df8808b7e7892382ce3" alt="{\textstyle {\frac {\partial ^{2}r_{i}}{\partial \beta _{j}\partial \beta _{k}}}}"> is relatively small in magnitude.</li></ol>
+<h2>Improved versions</h2>
+<p>With the Gauss–Newton method the sum of squares of the residuals <i>S</i> may not decrease at every iteration. However, since Δ is a descent direction, unless <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/c471107b99578228e0269b2d210b3aba293ecfce" alt="{\displaystyle S\left({\boldsymbol {\beta }}^{s}\right)}"> is a stationary point, it holds that <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/f994b2c3ebcc355eeaf3b84c0bee0ac5e53dffd0" alt="{\displaystyle S\left({\boldsymbol {\beta }}^{s}+\alpha \Delta \right)&lt;S\left({\boldsymbol {\beta }}^{s}\right)}"> for all sufficiently small <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/edd4f784b6e8bb68fa774213ceacbab2d97825dc" alt="{\displaystyle \alpha &gt;0}">. Thus, if divergence occurs, one solution is to employ a fraction <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b79333175c8b3f0840bfb4ec41b8072c83ea88d3" alt="{\displaystyle \alpha }"> of the increment vector Δ in the updating formula:
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/1be1554d2fc1bb252491081af0e9d41052021127" alt="{\displaystyle {\boldsymbol {\beta }}^{s+1}={\boldsymbol {\beta }}^{s}+\alpha \Delta .}">
+</p><p>In other words, the increment vector is too long, but it still points "downhill", so going just a part of the way will decrease the objective function <i>S</i>. An optimal value for <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b79333175c8b3f0840bfb4ec41b8072c83ea88d3" alt="{\displaystyle \alpha }"> can be found by using a line search algorithm, that is, the magnitude of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b79333175c8b3f0840bfb4ec41b8072c83ea88d3" alt="{\displaystyle \alpha }"> is determined by finding the value that minimizes <i>S</i>, usually using a direct search method in the interval <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b43eb26b3586c8f17272d05089e2ce832c274dea" alt="{\displaystyle 0&lt;\alpha &lt;1}"> or a backtracking line search such as Armijo-line search. Typically, <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b79333175c8b3f0840bfb4ec41b8072c83ea88d3" alt="{\displaystyle \alpha }"> should be chosen such that it satisfies the Wolfe conditions or the Goldstein conditions.<sup>[11]</sup>
+</p><p>In cases where the direction of the shift vector is such that the optimal fraction α is close to zero, an alternative method for handling divergence is the use of the Levenberg–Marquardt algorithm, a trust region method.<sup>[3]</sup> The normal equations are modified in such a way that the increment vector is rotated towards the direction of steepest descent,
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/8f15d66600100a753307ec1ab6bcb167e33e8bb5" alt="{\displaystyle \left(\mathbf {J^{\operatorname {T} }J+\lambda D} \right)\Delta =-\mathbf {J} ^{\operatorname {T} }\mathbf {r} ,}">
+</p><p>where <b>D</b> is a positive diagonal matrix. Note that when <b>D</b> is the identity matrix <b>I</b> and <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/2c858abfaad4de97433a205c836b986dea8e59c0" alt="{\displaystyle \lambda \to +\infty }">, then <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/4284844f6013455d8ea0de9b3ece002bab1a4b95" alt="{\displaystyle \lambda \Delta =\lambda \left(\mathbf {J^{\operatorname {T} }J} +\lambda \mathbf {I} \right)^{-1}\left(-\mathbf {J} ^{\operatorname {T} }\mathbf {r} \right)=\left(\mathbf {I} -\mathbf {J^{\operatorname {T} }J} /\lambda +\cdots \right)\left(-\mathbf {J} ^{\operatorname {T} }\mathbf {r} \right)\to -\mathbf {J} ^{\operatorname {T} }\mathbf {r} }">, therefore the direction of Δ approaches the direction of the negative gradient <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/97285d675e2f33b39c0166d7afbf72f086fb508b" alt="{\displaystyle -\mathbf {J} ^{\operatorname {T} }\mathbf {r} }">.
+</p><p>The so-called Marquardt parameter <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b43d0ea3c9c025af1be9128e62a18fa74bedda2a" alt="{\displaystyle \lambda }"> may also be optimized by a line search, but this is inefficient, as the shift vector must be recalculated every time <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/b43d0ea3c9c025af1be9128e62a18fa74bedda2a" alt="{\displaystyle \lambda }"> is changed. A more efficient strategy is this: When divergence occurs, increase the Marquardt parameter until there is a decrease in <i>S</i>. Then retain the value from one iteration to the next, but decrease it if possible until a cut-off value is reached, when the Marquardt parameter can be set to zero; the minimization of <i>S</i> then becomes a standard Gauss–Newton minimization.
+</p>
+<h2>Large-scale optimization</h2>
+<p>For large-scale optimization, the Gauss–Newton method is of special interest because it is often (though certainly not always) true that the matrix <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/844d4bbdb3a98aec68d3a3fb1f745dc3a47003ad" alt="{\displaystyle \mathbf {J} _{\mathbf {r} }}"> is more sparse than the approximate Hessian <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/fbc0c1c7c7776da6b1d9d1dbb922e499eebc7f2d" alt="{\displaystyle \mathbf {J} _{\mathbf {r} }^{\operatorname {T} }\mathbf {J_{r}} }">. In such cases, the step calculation itself will typically need to be done with an approximate iterative method appropriate for large and sparse problems, such as the conjugate gradient method.
+</p><p>In order to make this kind of approach work, one needs at least an efficient method for computing the product
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/df1dc56b9b40cedbb98683fd998f7fd0423a945b" alt="{\displaystyle {\mathbf {J} _{\mathbf {r} }}^{\operatorname {T} }\mathbf {J_{r}} \mathbf {p} }">
+</p><p>for some vector <b>p</b>. With sparse matrix storage, it is in general practical to store the rows of <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/844d4bbdb3a98aec68d3a3fb1f745dc3a47003ad" alt="{\displaystyle \mathbf {J} _{\mathbf {r} }}"> in a compressed form (e.g., without zero entries), making a direct computation of the above product tricky due to the transposition. However, if one defines <b>c</b><sub><i>i</i></sub> as row <i>i</i> of the matrix <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/844d4bbdb3a98aec68d3a3fb1f745dc3a47003ad" alt="{\displaystyle \mathbf {J} _{\mathbf {r} }}">, the following simple relation holds:
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/0dfd8a243337951279a289859d983702862191e8" alt="{\displaystyle {\mathbf {J} _{\mathbf {r} }}^{\operatorname {T} }\mathbf {J_{r}} \mathbf {p} =\sum _{i}\mathbf {c} _{i}\left(\mathbf {c} _{i}\cdot \mathbf {p} \right),}">
+</p><p>so that every row contributes additively and independently to the product. In addition to respecting a practical sparse storage structure, this expression is well suited for parallel computations. Note that every row <b>c</b><sub><i>i</i></sub> is the gradient of the corresponding residual <i>r</i><sub><i>i</i></sub>; with this in mind, the formula above emphasizes the fact that residuals contribute to the problem independently of each other.
+</p>
+<h2>Related algorithms</h2>
+<p>In a quasi-Newton method, such as that due to Davidon, Fletcher and Powell or Broyden–Fletcher–Goldfarb–Shanno (BFGS method) an estimate of the full Hessian <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/49c4dc80ce20f7cde44ceeaf9ccc85b303ffe1e6" alt="{\textstyle {\frac {\partial ^{2}S}{\partial \beta _{j}\partial \beta _{k}}}}"> is built up numerically using first derivatives <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/9a8a46cd364c7b0e4689f3ee0379b8b86087dc1c" alt="{\textstyle {\frac {\partial r_{i}}{\partial \beta _{j}}}}"> only so that after <i>n</i> refinement cycles the method closely approximates to Newton's method in performance. Note that quasi-Newton methods can minimize general real-valued functions, whereas Gauss–Newton, Levenberg–Marquardt, etc. fits only to nonlinear least-squares problems.
+</p><p>Another method for solving minimization problems using only first derivatives is gradient descent. However, this method does not take into account the second derivatives even approximately. Consequently, it is highly inefficient for many functions, especially if the parameters have strong interactions.
+</p>
+<h2>Example implementations</h2>
+<h3>Julia</h3>
+<p>The following implementation in Julia provides one method which uses a provided Jacobian and another computing with automatic differentiation.
+</p>
+<pre>"""
+    gaussnewton(r, J, β₀, maxiter, tol)
+
+Perform Gauss–Newton optimization to minimize the residual function `r` with Jacobian `J` starting from `β₀`. The algorithm terminates when the norm of the step is less than `tol` or after `maxiter` iterations.
+"""
+function gaussnewton(r, J, β₀, maxiter, tol)
+    β = copy(β₀)
+    for _ in 1:maxiter
+        Jβ = J(β);
+        Δ  = -(Jβ' * Jβ) \ (Jβ' * r(β)) 
+        β += Δ
+        if sqrt(sum(abs2, Δ)) &lt; tol
+            break
+        end
+    end
+    return β
+end
+
+import AbstractDifferentiation as AD, Zygote
+backend = AD.ZygoteBackend() # other backends are available
+
+"""
+    gaussnewton(r, β₀, maxiter, tol)
+
+Perform Gauss–Newton optimization to minimize the residual function `r` starting from `β₀`. The relevant Jacobian is calculated using automatic differentiation. The algorithm terminates when the norm of the step is less than `tol` or after `maxiter` iterations.
+"""
+function gaussnewton(r, β₀, maxiter, tol)
+    β = copy(β₀)
+    for _ in 1:maxiter
+        rβ, Jβ = AD.value_and_jacobian(backend, r, β)
+        Δ  = -(Jβ[1]' * Jβ[1]) \ (Jβ[1]' * rβ) 
+        β += Δ
+        if sqrt(sum(abs2, Δ)) &lt; tol
+            break
+        end
+    end
+    return β
+end
+</pre>
+<h2>Notes</h2>
+<ol>
+<li><b>^</b> Mittelhammer, Ron C.; Miller, Douglas J.; Judge, George G. (2000). <i>Econometric Foundations</i>. Cambridge: Cambridge University Press. pp. 197–198. ISBN 0-521-62394-4.
+</li>
+<li><b>^</b> Floudas, Christodoulos A.; Pardalos, Panos M. (2008). <i>Encyclopedia of Optimization</i>. Springer. p. 1130. ISBN 9780387747583.
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> Björck (1996)
+</li>
+<li>^ <sup><i><b>a</b></i></sup> <sup><i><b>b</b></i></sup> J.E. Dennis, Jr. and R.B. Schnabel (1983). <i>Numerical Methods for Unconstrained Optimization and Nonlinear Equations</i>. SIAM 1996 reproduction of Prentice-Hall 1983 edition. p. 222.
+</li>
+<li><b>^</b> Björck (1996), p. 260.
+</li>
+<li><b>^</b> Mascarenhas (2013), "The divergence of the BFGS and Gauss Newton Methods", <i>Mathematical Programming</i>, <b>147</b> (1): 253–276, arXiv:1309.7922, doi:10.1007/s10107-013-0720-6, S2CID 14700106
+</li>
+<li><b>^</b> Björck (1996), p. 341, 342.
+</li>
+<li><b>^</b> Fletcher (1987), p. 113.
+</li>
+<li><b>^</b> "Archived copy" (PDF). Archived from the original (PDF) on 2016-08-04. Retrieved 2014-04-25.
+</li>
+<li><b>^</b> Nocedal (1999), p. 259.
+</li>
+<li><b>^</b> Nocedal, Jorge. (1999). <i>Numerical optimization</i>. Wright, Stephen J., 1960-. New York: Springer. ISBN 0387227423. OCLC 54849297.
+</li>
+</ol>
+<h2>References</h2>
+<ul><li>Björck, A. (1996). <i>Numerical methods for least squares problems</i>. SIAM, Philadelphia. ISBN 0-89871-360-9.</li>
+<li>Fletcher, Roger (1987). <i>Practical methods of optimization</i> (2nd ed.). New York: John Wiley &amp; Sons. ISBN 978-0-471-91547-8..</li>
+<li>Nocedal, Jorge; Wright, Stephen (1999). <i>Numerical optimization</i>. New York: Springer. ISBN 0-387-98793-2.</li></ul>
+<h2>External links</h2>
+<ul><li><i>Probability, Statistics and Estimation</i>  The algorithm is detailed and applied to the biology experiment discussed as an example in this article (page 84 with the uncertainties on the estimated values).</li></ul>
+<h3>Implementations</h3>
+<ul><li>Artelys Knitro is a non-linear solver with an implementation of the Gauss–Newton method. It is written in C and has interfaces to C++/C#/Java/Python/MATLAB/R.</li></ul>
+
+
+
+
+
+
+
+

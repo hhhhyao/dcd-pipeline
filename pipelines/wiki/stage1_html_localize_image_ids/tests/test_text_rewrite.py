@@ -71,7 +71,8 @@ def test_rewrite_text_dataset_uses_inline_image_refs(tmp_path) -> None:
     info = json.loads(out_row["info"])
     assert 'src="images/img-1"' in out_row["data"]
     assert '_image_ref_id="img-1_hasha"' in out_row["data"]
-    assert info["image_ids"] == ["img-1"]
+    assert "image_ids" not in info
+    assert info["__defined__"]["links"]["images"] == [{"id": "img-1"}]
     assert set(info["image_refs"]) == {"img-1_hasha", "img-2_hashb"}
     assert info["image_refs"]["img-1_hasha"]["image_url_ori"].startswith("//upload")
     assert stats["missing_urls"] == 1

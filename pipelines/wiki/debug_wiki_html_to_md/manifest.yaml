@@ -1,0 +1,24 @@
+name: debug_wiki_html_to_md
+description: Debug copy of wiki Stage2 that parses raw HTML into cleaned markdown or simplified HTML
+author: yao.lewei1@huawei.com
+operation: map
+input_format: [html]
+input_fields:
+  text: [id, data, info]
+output_format: md
+output_fields:
+  text: [id, data, info]
+config:
+  - name: remove_ref
+    type: bool
+    default: true
+    label: Remove references
+  - name: out_format
+    type: select
+    default: md
+    options: [md, html]
+    label: Output format
+  - name: timeout
+    type: int
+    default: 30
+    label: Parse timeout (seconds)

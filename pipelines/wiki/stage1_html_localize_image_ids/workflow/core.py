@@ -37,6 +37,7 @@ from workflow.html_rewrite import (
     json_dumps,
     parse_image_ref_id,
 )
+from workflow.info_links_compat import get_links, set_links
 from workflow.metadata import (
     discover_repo_metadata,
     discover_runtime_user,
@@ -158,7 +159,7 @@ def _parse_rows_from_pylist(batch_rows: list[dict[str, Any]]) -> tuple[list[dict
     row_image_refs = 0
     for row in batch_rows:
         info = _parse_info(str(row.get("info") or "{}"))
-        image_ids = dedupe_preserve_order(str(item) for item in (info.get("image_ids") or []) if item)
+        image_ids = dedupe_preserve_order(link["id"] for link in get_links(info, "images"))
         image_refs, ref_warnings = _parse_image_refs(info)
         parsed_rows.append({
             "id": str(row["id"]),
@@ -281,7 +282,8 @@ def _rewrite_rows(
                 })
                 LOG.warning("text_id=%s image_ref_id=%s did not match any HTML image URL", row["id"], image_ref_id)
 
-        row["info"]["image_ids"] = dedupe_preserve_order(used_image_ids)
+        row["info"].pop("image_ids", None)
+        set_links(row["info"], "images", dedupe_preserve_order(used_image_ids))
         row["info"]["image_refs"] = row["image_refs"]
         output_rows.append({
             "id": row["id"],

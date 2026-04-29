@@ -16,6 +16,11 @@ The pipe entrypoint is `ingest(ctx)`, and it writes:
 - `images.lance`
 - `image_labels.lance`
 
+This pipe currently remains a legacy ingest pipe. Its manifest omits
+`output_fields` on purpose so newer `dcd-cli` / `dcd-server` releases
+keep routing it through the `ctx.output_dir` code path instead of the
+new generator-form ingest path.
+
 Current Stage-0 behavior mirrors the raw-dump reference ingest:
 
 - article IDs are `sha256(html)`
@@ -25,11 +30,13 @@ Current Stage-0 behavior mirrors the raw-dump reference ingest:
 - duplicate image/image_label rows are preserved here and deduplicated in Stage 1
 - Lance writes default to `stream_once`, which buffers part outputs through
   Arrow streams and commits each table once
-- `text.info.image_ids` lists image ids only for refs with `image_url_ori`
+- `text.info.__defined__.links.images` lists image ids only for refs with
+  `image_url_ori`
 - `text.info.image_refs` stores article-local image metadata keyed by
   `<image_id>_<sha256(image_url_ori)>`
 - `image_labels.info` keeps only image-stable metadata such as `image_md5`,
-  `width`, `height`, `channel`, and `size_bytes`
+  `width`, `height`, `channel`, and `size_bytes`, plus
+  `__defined__.links.text` back to the source text row
 - caption/url/file fields are kept out of `image_labels.info` because they can
   vary across articles for the same image bytes
 

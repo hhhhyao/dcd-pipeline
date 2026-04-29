@@ -3,10 +3,6 @@ author: yao.lewei1@huawei.com
 description: Rewrite HTML image refs from text.info.image_refs and deduplicate image_labels
 operation: ingest
 network: false
-output_fields:
-  text: [id, info, data, tags]
-  image: [id, image_bytes, sha256]
-  image_labels: [id, info, data, tags]
 tags: [wiki, transform, html, image, lance]
 resources:
   cpus: 16

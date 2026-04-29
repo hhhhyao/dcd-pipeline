@@ -64,6 +64,64 @@ def test_dedup_image_labels_merges_tags_without_warning_for_equivalent_info(tmp_
     assert warning_count == 0
 
 
+def test_dedup_image_labels_merges_canonical_and_legacy_text_links(tmp_path) -> None:
+    image_labels_path = tmp_path / "image_labels_links.lance"
+    image_labels_out = tmp_path / "image_labels_links_out.lance"
+    cache_dir = tmp_path / "cache_links"
+
+    write_dataset(
+        image_labels_path,
+        IMAGE_LABELS_SCHEMA,
+        [
+            {
+                "id": "img-1",
+                "info": json.dumps({
+                    "width": 1,
+                    "__defined__": {"links": {"text": [{"id": "text-1"}]}},
+                }, ensure_ascii=False),
+                "data": "",
+                "tags": ["x"],
+            },
+            {
+                "id": "img-1",
+                "info": json.dumps({
+                    "width": 1,
+                    "text_ids": ["text-2", "text-1"],
+                }, ensure_ascii=False),
+                "data": "",
+                "tags": ["y"],
+            },
+        ],
+    )
+
+    warning_writer = JsonlShardWriter(cache_dir, "warnings", flush_rows=10)
+    label_stats = dedup_image_labels_dataset(
+        image_labels_path,
+        image_labels_out,
+        row_ids_by_image_id={"img-1": [0, 1]},
+        ordered_image_ids=["img-1"],
+        batch_size=8,
+        write_flush_rows=8,
+        progress_every=0,
+        warning_writer=warning_writer,
+        temp_dir=cache_dir,
+    )
+    warning_count = warning_writer.finalize(tmp_path / "warnings_links.jsonl")
+
+    label_row = lance.dataset(str(image_labels_out)).to_table().to_pylist()[0]
+    info = json.loads(label_row["info"])
+    assert info == {
+        "width": 1,
+        "__defined__": {
+            "links": {
+                "text": [{"id": "text-1"}, {"id": "text-2"}],
+            },
+        },
+    }
+    assert label_stats["content_mismatch_warnings"] == 0
+    assert warning_count == 0
+
+
 def test_dedup_image_labels_warns_when_non_tag_content_differs(tmp_path) -> None:
     image_labels_path = tmp_path / "image_labels_warn.lance"
     image_labels_out = tmp_path / "image_labels_warn_out.lance"

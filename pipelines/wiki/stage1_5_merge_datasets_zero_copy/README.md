@@ -2,6 +2,10 @@
 
 Local ingest pipe that merges multiple Stage1 wiki datasets.
 
+This pipe currently remains on the legacy ingest path. Its manifest
+omits `output_fields` intentionally so newer DCD runtimes do not treat
+it as a generator-form ingest pipe.
+
 It concatenates `text.lance`, deduplicates `image_labels.lance` by first-seen
 image id, and creates a new `images.lance` by committing Lance manifest metadata
 that references each source dataset's existing `images.lance/data/*.lance` files.

@@ -49,7 +49,7 @@ def test_build_text_info_preserves_raw_page_fields() -> None:
     assert info["original_url"] == "https://example.com/raw"
     assert info["crawl_time"] == "123"
     assert info["extra_key"] == "extra-value"
-    assert info["image_ids"] == ["img_1"]
+    assert info["__defined__"]["links"]["images"] == [{"id": "img_1"}]
     assert info["image_refs"] == {"img_1_ref": {"caption_text": "caption"}}
     assert "page_type" not in info
     assert "html" not in info
@@ -72,13 +72,14 @@ def test_image_metadata_split_between_text_refs_and_label_info() -> None:
         "height": 200,
         "channel": "RGB",
     }
-    label_info = build_image_info(img_meta, image_record=image_record)
+    label_info = build_image_info(img_meta, image_record=image_record, text_id="text-1")
     assert label_info == {
         "image_md5": "abc",
         "width": 100,
         "height": 200,
         "channel": "RGB",
         "size_bytes": len(b"fake-image-bytes"),
+        "__defined__": {"links": {"text": [{"id": "text-1"}]}},
     }
 
     image_ref = build_image_ref(img_meta)
@@ -136,9 +137,9 @@ def test_run_streaming_writes_v2_image_refs(tmp_path: Path) -> None:
 
     text_row = lance.dataset(str(dst_dir / "text.lance")).to_table().to_pylist()[0]
     text_info = json.loads(text_row["info"])
-    image_id = text_info["image_ids"][0]
+    image_id = text_info["__defined__"]["links"]["images"][0]["id"]
     assert text_row["tags"] == ["ENCYCLOPEDIA_PAGE"]
-    assert text_info["image_ids"] == [image_id]
+    assert text_info["__defined__"]["links"]["images"] == [{"id": image_id}]
     assert list(text_info["image_refs"]) == [build_image_ref_id(image_id, image_url_ori)]
     assert text_info["image_refs"][build_image_ref_id(image_id, image_url_ori)]["caption_text"] == "Caption"
     assert "page_type" not in text_info
@@ -151,6 +152,7 @@ def test_run_streaming_writes_v2_image_refs(tmp_path: Path) -> None:
     assert label_info["height"] == 3
     assert label_info["channel"] == "RGB"
     assert label_info["size_bytes"] == len(image_bytes)
+    assert label_info["__defined__"]["links"]["text"] == [{"id": text_row["id"]}]
     for moved_key in ("caption_text", "caption_title", "image_url", "image_url_ori", "image_file"):
         assert moved_key not in label_info
 

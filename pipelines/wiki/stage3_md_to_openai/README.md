@@ -37,13 +37,18 @@ The pipe preserves existing metadata such as `url` and `title`, and updates:
 ```json
 {
   "format": "openai",
-  "image_ids": ["part/hash/file.jpg"],
+  "__defined__": {
+    "links": {
+      "images": [{ "id": "part/hash/file.jpg" }]
+    }
+  },
   "dropped_nonlocal_images": 2
 }
 ```
 
-`image_ids` is rebuilt from the actual emitted `image_url` blocks in block
-order.
+Canonical cross-modality links under `info.__defined__.links.images` are
+rebuilt from the actual emitted `image_url` blocks in block order. Legacy
+`info.image_ids` is removed when present.
 Any upstream `image_refs` key is removed from `info`.
 
 ## Local Run
