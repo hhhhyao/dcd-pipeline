@@ -1,0 +1,30 @@
+name: dclm_baseline_parquet_to_text_lance
+authors: [yao.lewei1@huawei.com]
+description: Convert local DCLM baseline parquet shards into a DCD text Lance dataset.
+operation: ingest
+batch_format: pyarrow
+network: false
+tags: [dclm-baseline, ingest, parquet, lance, text]
+output_fields:
+  text: [id, data, info, tags]
+volumes:
+  - name: source
+    readonly: true
+config:
+  - name: source_glob
+    type: str
+    default: "**/*.parquet"
+    label: Parquet file glob under the source volume
+  - name: batch_rows
+    type: int
+    default: 10000
+    label: Rows per yielded batch
+  - name: max_rows
+    type: int
+    default: 0
+    label: Maximum rows to import (0 = all)
+resources:
+  cpus: 2
+  memory_mb: 8192
+  timeout_per_item: 14400
+
