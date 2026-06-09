@@ -1,0 +1,31 @@
+name: nature_stage0_ingest_jsonl_tar_to_html
+author: yao.lewei1@huawei.com
+authors: [yao.lewei1@huawei.com, zhouyiren@huawei.com]
+description: >-
+  Ingest nature part*.jsonl + part*.tar source files into an HTML Lance dataset
+  with text, images, and image_labels tables.
+operation: ingest
+batch_format: dict
+network: true
+raw_inputs: [source]
+output_fields:
+  text: [id, data, info, tags]
+  image: [id, image_bytes, info, data, tags]
+tags: [nature, ingest, html, lance]
+config:
+  - name: source_dir
+    type: str
+    default: ""
+    label: Directory containing part*.jsonl and part*.tar
+  - name: log_interval
+    type: int
+    default: 250
+    label: Progress log interval in articles
+  - name: write_strategy
+    type: str
+    default: stream_once
+    label: "Lance write strategy: stream_once or append_parts"
+  - name: remote_batch_size
+    type: int
+    default: 25
+    label: Rows per yielded batch when running without ctx.output_dir

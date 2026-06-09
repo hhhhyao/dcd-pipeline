@@ -17,19 +17,9 @@ Before doing implementation, validation, or local server work:
 git submodule update --init --recursive
 ```
 
-   Optional: sync all reference submodules to the latest upstream `main` (see `branch` in `.gitmodules`):
+2. Confirm the upstream reference repo exists:
 
-```bash
-git submodule update --remote --merge
-```
-
-   Commit updated submodule pointers in the parent repo when you intend to pin a new upstream revision for collaborators.
-
-2. Confirm the upstream reference repos exist:
-
-- `reference_repo/dcd`
 - `reference_repo/dcd-cli`
-- `reference_repo/dcd-server`
 
 3. If a command depends on local host or credentials, read `.server_info` when present.
 
@@ -78,17 +68,11 @@ If repo-local habits conflict with those docs, follow the upstream docs.
 
 ### Upstream Repos
 
-Source-of-truth split:
-
-- **Pipes** — `reference_repo/dcd-cli` (manifests, runtime semantics, `dcd` CLI, validation). This stays the normative reference for pipe work.
-- **Server/runtime implementation** — `reference_repo/dcd-server` when you need up-to-date server-side code (APIs, job runner, sandbox, and related `dataclawdev` code paths).
-- **Full-stack local viewer / frontend** — `reference_repo/dcd` for integrated layout and docs; if that submodule cannot track upstream, prefer `dcd-server` for backend freshness and still rely on `dcd-cli` for pipe contracts.
-
-- Treat `reference_repo/dcd`, `reference_repo/dcd-cli`, and `reference_repo/dcd-server` as upstream references.
+- Treat `reference_repo/dcd-cli` as the upstream reference.
 - Prefer wrapper scripts, environment variables, local work dirs, symlinks, and repo-local
   helper docs over editing upstream code.
-- Do not modify code under `reference_repo/dcd`, `reference_repo/dcd-cli`, or `reference_repo/dcd-server` unless the user
-  explicitly asks for upstream source changes.
+- Do not modify code under `reference_repo/dcd-cli` unless the user explicitly asks for
+  upstream source changes.
 - If a local setup problem can be solved without upstream edits, solve it at the runtime or
   configuration layer instead.
 
@@ -114,10 +98,7 @@ When editing or creating a pipe:
 ## Runtime Rules
 
 Normative detail lives in `reference_repo/dcd-cli/docs/pipe.md` under the runtime,
-sandbox, volume, and network sections. For server-side execution detail, also see:
-
-- `reference_repo/dcd/docs/manual/pipe.md`
-- `reference_repo/dcd/docs/design/job-lifecycle.md`
+sandbox, volume, and network sections.
 
 Write pipe code with these assumptions:
 
@@ -172,30 +153,16 @@ If you are preparing a new version, review the upload and update flow in
 
 ## Remote Server References
 
-Use these docs when deploying pipes to a host or reasoning about server-side execution.
-
-`dcd-cli`
+Use these docs when deploying pipes to a host or reasoning about CLI-side execution.
 
 - `reference_repo/dcd-cli/docs/cli.md`
 - `reference_repo/dcd-cli/docs/pipe.md`
 
-`dcd`
-
-- `reference_repo/dcd/docs/api.md`
-- `reference_repo/dcd/docs/design/job-lifecycle.md`
-- `reference_repo/dcd/docs/design/remote-runner.md`
-- `reference_repo/dcd/docs/design/runner.md`
-
 ## Local Web UI
 
-The browser UI ships with `reference_repo/dcd` (`dataclawdev`), not with `dcd-cli`.
-
-Use these references:
-
-- `reference_repo/dcd/README.md`
-- `reference_repo/dcd/docs/webapp.md`
-- `skills/dcd-local-server/SKILL.md` when the task is about starting, verifying, or
-  troubleshooting the local viewer
+The browser UI is no longer vendored under `reference_repo/`. Use
+`skills/dcd-local-server/SKILL.md` when the task is about starting, verifying, or
+troubleshooting a configured local viewer.
 
 For local viewer work in this repo:
 

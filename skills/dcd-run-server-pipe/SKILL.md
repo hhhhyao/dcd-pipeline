@@ -42,7 +42,6 @@ export DCD_SECRET="$DCD_TOKEN"
 
 The local environment also needs:
 
-- `reference_repo/dcd`
 - `reference_repo/dcd-cli`
 - an active Python environment where `dcd` is available, or a fallback path for
   `python3 -m dcd_cli.cli`

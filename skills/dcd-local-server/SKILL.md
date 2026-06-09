@@ -23,15 +23,14 @@ Use these references in order:
 
 1. `AGENTS.md`
 2. `README.md`
-3. `reference_repo/dcd/README.md`
-4. `reference_repo/dcd/docs/webapp.md`
 
-Use `reference_repo/dcd` as the source of truth for local web UI behavior.
+Use the configured DCD server checkout or deployment as the source of truth for local web UI
+behavior. This repo no longer vendors the DCD server/web UI source under `reference_repo/`.
 
 ## Scope Rules
 
-- Do not modify `reference_repo/dcd` just to make local startup easier unless the user explicitly
-  asks for upstream source changes.
+- Do not modify an external DCD server checkout just to make local startup easier unless the user
+  explicitly asks for upstream source changes.
 - Prefer runtime fixes: environment variables, start commands, local work dirs, dataset
   placement, account creation, and browser-state cleanup.
 - Treat `workspace/` as repo-local runtime state. It may not exist in a fresh clone; create it
@@ -62,8 +61,10 @@ If local viewer work is requested and `workspace/` does not exist, create it.
 
 ## Key Runtime Facts
 
-- The local web UI lives in `reference_repo/dcd`.
-- The built frontend must exist under `reference_repo/dcd/dataclawdev/server/static/`.
+- The local web UI is provided by the configured DCD server checkout or deployment, not by this
+  repo's `reference_repo/` directory.
+- If using a source checkout, confirm its built frontend assets are present according to that
+  checkout's docs.
 - The active server decides which dataset directory is visible in the UI.
 - The local server work dir should stay repo-local when possible, typically somewhere under
   `workspace/`.
@@ -78,25 +79,26 @@ If local viewer work is requested and `workspace/` does not exist, create it.
 
 1. Check whether a DCD server is already listening on the target port.
 2. Inspect the running process command and working directory.
-3. Confirm whether it is serving this repo's `reference_repo/dcd` or some other checkout.
+3. Confirm which checkout, installed package, or deployment is serving the port.
 4. Identify which work dir and dataset directory that active server is actually using.
 
 If a different checkout is serving the port, say that explicitly before doing anything else.
 
 ### 2. Validate prerequisites
 
-Check:
+Check the configured server checkout or deployment for:
 
-- `reference_repo/dcd/frontend/package.json`
-- `reference_repo/dcd/dataclawdev/server/static/index.html`
-- `reference_repo/dcd/datasets/`
+- frontend build prerequisites, when using a source checkout
+- built frontend assets, when the server expects local static files
+- the active dataset directory
 - the chosen local work dir if one is already known, usually
   `workspace/dataclawdev-server-data/`
 
-If `static/index.html` is missing, build the frontend first:
+If frontend assets are missing in a source checkout, build the frontend according to that
+checkout's docs. A typical source checkout flow is:
 
 ```bash
-cd reference_repo/dcd/frontend
+cd <dcd_checkout>/frontend
 npm ci
 npm run build
 ```
@@ -131,7 +133,7 @@ conventional staging location.
 
 Preferred goal:
 
-- serve `reference_repo/dcd`
+- serve the configured DCD server checkout or deployment
 - on the configured host and port
 - with a repo-local work dir, usually `workspace/dataclawdev-server-data/`
 
@@ -234,7 +236,7 @@ When multiple DCD checkouts may exist on one machine, also inspect:
 Return a compact report with:
 
 - viewer URL
-- which `reference_repo/dcd` instance is serving it
+- which checkout, installed package, or deployment is serving it
 - active work dir
 - login identity used or created
 - dataset visibility result

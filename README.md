@@ -17,19 +17,7 @@ git submodule update --init --recursive
 
 This repo depends on:
 
-- `reference_repo/dcd`
 - `reference_repo/dcd-cli`
-- `reference_repo/dcd-server`
-
-### Optional: Sync reference repos to upstream `main`
-
-Submodules track `main` in `.gitmodules`. After init, or when you want the latest upstream:
-
-```bash
-git submodule update --remote --merge
-```
-
-Commit the updated submodule pointers in this repo if you want that revision recorded for others.
 
 ### 2. Create a virtual environment
 
@@ -98,15 +86,9 @@ dcd pipe validate pipelines/wiki/stage2_parse_html --host "$DCD_HOST"
   `reference_repo/dcd-cli/docs/cli.md`.
 - For text format conventions such as `html`, `markdown`, `json`, and `openai`, see
   `reference_repo/dcd-cli/docs/text-formats.md`.
-- For local viewer work, start with `reference_repo/dcd/README.md` and
-  `reference_repo/dcd/docs/webapp.md`.
+- For local viewer work, use the configured DCD server checkout or deployment and see
+  `skills/dcd-local-server/SKILL.md`.
 - For agent-specific execution rules in this repo, see `AGENTS.md`.
-
-## Upstream repos (how they relate)
-
-- **`dcd-cli`** — Canonical docs and behavior for pipe manifests, CLI usage, and validation.
-- **`dcd-server`** — Server-side package from the same product line; prefer this checkout when you need **current** server/runtime code (HTTP stack, jobs, sandbox, and related `dataclawdev` implementation).
-- **`dcd`** — Full monorepo (including frontend sources and local viewer docs). Use it for **full-stack local setup** narratives; if the upstream `dcd` checkout is stale or inaccessible, treat **`dcd-server`** as the fresher reference for **backend** behavior and keep **`dcd-cli`** as the pipe contract.
 
 ## Repo Layout
 
@@ -149,7 +131,7 @@ In practice:
 
 ## Local DCD Viewer
 
-The local browser UI lives in `reference_repo/dcd`, not in `dcd-cli`.
+The local browser UI is not vendored in this repo.
 
 Keep in mind:
 

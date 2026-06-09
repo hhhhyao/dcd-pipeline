@@ -1,0 +1,23 @@
+name: nature_stage3_md_to_openai
+author: yao.lewei1@huawei.com
+authors: [yao.lewei1@huawei.com, zhouyiren@huawei.com]
+description: >-
+  Convert nature markdown text.lance to OpenAI-style messages with role-based
+  content parts. Removes leading YAML front matter, drops non-local markdown
+  images, and rewrites text.lance only.
+operation: map
+network: false
+input_format: [md]
+input_fields:
+  text: [id, data, info, tags]
+  image: [id, image_bytes, info, data, tags]
+output_format: json
+output_fields:
+  text: [id, data, info, tags]
+  image: [id, image_bytes, info, data, tags]
+config:
+  - name: message_role
+    type: str
+    default: user
+    label: Role used for the single generated OpenAI message
+tags: [nature, markdown, openai, multimodal, lance]
