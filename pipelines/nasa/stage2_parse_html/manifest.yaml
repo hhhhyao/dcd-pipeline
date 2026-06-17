@@ -1,0 +1,27 @@
+name: nasa_stage2_parse_html
+description: Parse raw HTML into cleaned markdown and simplified HTML with agent in the loop
+author: yao.lewei1@huawei.com
+authors: [yao.lewei1@huawei.com, zhouyiren@huawei.com]
+operation: map
+input_format: [html]
+input_fields:
+  text: [id, data, info, tags]
+  image: [id, image_bytes, info, data, tags]
+output_format: md
+output_fields:
+  text: [id, data, info, tags]
+  image: [id, image_bytes, info, data, tags]
+config:
+  - name: remove_ref
+    type: bool
+    default: true
+    label: Remove references
+  - name: out_format
+    type: select
+    default: md
+    options: [md, html]
+    label: Output format
+  - name: timeout
+    type: int
+    default: 30
+    label: Parse timeout (seconds)

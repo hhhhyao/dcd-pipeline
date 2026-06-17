@@ -15,6 +15,15 @@ article HTML and images into multimodal datasets.
 
 Local execution helpers live in `run_local/`.
 
+## Preprocess Helpers
+
+- `preprocess0-0_html_crawl_test_nature.py`: collect candidate Nature URLs.
+- `preprocess0-1_nature_oa_filter.py`: annotate raw `part*.jsonl` rows with
+  an `open_access` boolean and URL pattern fields.
+- `preprocess0-2_img_url_crawl_test_nature.py`: collect page image URLs.
+- `preprocess0-3_map_html_and_img_test_nature.py`: build raw `part*.jsonl`
+  and `part*.tar` files from page/image mappings.
+
 ## Default Local Data Flow
 
 ```text

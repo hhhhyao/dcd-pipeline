@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Nature raw_data JSONL+TAR from page-to-image URL mappings."""
+"""Build NASA raw_data JSONL+TAR from page-to-image URL mappings."""
 
 from __future__ import annotations
 
@@ -19,15 +19,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import quote, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 
-DEFAULT_PAGE_IMG_MAP = Path("/root/zhouyiren/data/interleaved/nature/img_url_raw/page_img_urls.jsonl")
-DEFAULT_OUTPUT_DIR = Path("/root/zhouyiren/data/interleaved/nature/raw_data")
+DEFAULT_PAGE_IMG_MAP = Path("/root/zhouyiren/data/interleaved/nasa/img_url_raw/page_img_urls.jsonl")
+DEFAULT_OUTPUT_DIR = Path("/root/zhouyiren/data/interleaved/nasa/raw_data")
 USER_AGENT = (
-    "dcd-pipeline-nature-raw-data-crawler/0.1 "
-    "(article HTML and image collection; +https://www.nature.com/)"
+    "dcd-pipeline-nasa-raw-data-crawler/0.1 "
+    "(content HTML and image collection; +https://www.nasa.gov/)"
 )
 
 CONTENT_TYPE_EXTENSIONS = {
@@ -85,6 +85,16 @@ def sha256_hex(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def iri_to_uri(url: str) -> str:
+    """Percent-encode non-ASCII URL components before urllib requests."""
+    parsed = urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        return url
+    path = quote(parsed.path or "/", safe="/%:@")
+    query = quote(parsed.query, safe="=&?/:;+,%")
+    return urlunparse((parsed.scheme, parsed.netloc, path, "", query, ""))
+
+
 def read_limited(response: Any, *, max_bytes: int) -> bytes:
     chunks: list[bytes] = []
     total = 0
@@ -111,7 +121,7 @@ def fetch_url(
     for attempt in range(retries + 1):
         try:
             request = Request(
-                url,
+                iri_to_uri(url),
                 headers={
                     "Accept": accept,
                     "User-Agent": USER_AGENT,
@@ -212,22 +222,8 @@ def fetch_pages(
 
 
 def resolve_image_url_for_page(page_url: str, img_url: str, page_final_url: str) -> str:
-    """Fix Nature immersive article asset URLs from older preprocess0-2 mappings."""
-    parsed_img = urlparse(img_url)
-    parsed_page = urlparse(page_url)
-    parsed_final = urlparse(page_final_url or page_url)
-
-    if (
-        parsed_img.netloc == "www.nature.com"
-        and parsed_img.path.startswith("/articles/assets/")
-        and parsed_page.path.startswith("/articles/")
-        and parsed_final.path.startswith("/immersive/")
-    ):
-        immersive_base = parsed_final.path.rsplit("/", 1)[0]
-        asset_suffix = parsed_img.path.removeprefix("/articles/assets/")
-        corrected_path = f"{immersive_base}/assets/{asset_suffix}"
-        return urlunparse((parsed_final.scheme or "https", parsed_final.netloc, corrected_path, "", parsed_img.query, ""))
-
+    """Return the canonical image URL to fetch for a NASA page."""
+    _ = (page_url, page_final_url)
     return img_url
 
 
@@ -453,7 +449,7 @@ def build_outputs(
                 "html": html_text,
                 "image_status": image_status,
                 "images": images,
-                "page_type": ["NATURE_ARTICLE"],
+                "page_type": ["NASA_PAGE"],
                 "part": part_name,
                 "url": mapping.page_url,
             }
@@ -486,7 +482,7 @@ def build_outputs(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build Nature raw_data JSONL+TAR from preprocess0-2 page image mappings.",
+        description="Build NASA raw_data JSONL+TAR from preprocess0-1 page image mappings.",
     )
     parser.add_argument("--page-img-map", type=Path, default=DEFAULT_PAGE_IMG_MAP)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)

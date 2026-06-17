@@ -18,10 +18,21 @@ images such as:
 - `data` containing HTML
 - `info` JSON metadata
 
+When `info.tables` is present, it should contain the fetched Nature
+`/tables/<n>` pages for the article. Stage2 extracts the first HTML `<table>`
+from each record and injects it into the matching in-article table placeholder
+before converting to Markdown.
+
 ## Output
 
 `text.lance` with unchanged `id`, transformed `data`, and updated
 `info.format`.
+
+For rows with table records, raw `info.tables` is removed after conversion and
+replaced with:
+
+- `table_count`: number of table records seen
+- `tables_injected`: number of tables inserted into the article content
 
 ## Local Run
 

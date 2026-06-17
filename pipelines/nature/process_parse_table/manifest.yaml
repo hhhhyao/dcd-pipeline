@@ -1,0 +1,35 @@
+name: nature_process_parse_table
+author: zhouyiren@huawei.com
+authors: [zhouyiren@huawei.com]
+description: Convert Nature HTML table pages into markdown table text.
+operation: map
+network: false
+input_format: [html]
+input_fields:
+  text: [id, data, info, tags]
+output_format: md
+output_fields:
+  text: [id, data, info, tags]
+config:
+  - name: table_index
+    type: int
+    default: -1
+    label: "0-based table index to convert; -1 converts all top-level tables"
+  - name: include_title
+    type: bool
+    default: false
+    label: Prefix output with the table page title
+  - name: title_heading_level
+    type: int
+    default: 3
+    label: Markdown heading level when include_title is enabled
+  - name: span_fill
+    type: select
+    default: repeat
+    options: [repeat, blank]
+    label: How to fill cells expanded from colspan or rowspan
+  - name: collapse_headers
+    type: bool
+    default: true
+    label: Collapse multiple HTML header rows into one markdown header row
+tags: [nature, table, html, markdown]

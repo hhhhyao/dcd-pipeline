@@ -1,0 +1,25 @@
+name: nasa_stage4_filter_images
+author: yao.lewei1@huawei.com
+authors: [yao.lewei1@huawei.com, zhouyiren@huawei.com]
+description: >-
+  Filter stage3 OpenAI image blocks by image label width and height metadata
+  only, without tokenization or splitting.
+operation: map
+network: false
+input_format: [json]
+input_fields:
+  text: [id, data, info]
+  image: [info]
+output_format: json
+output_fields:
+  text: [id, data, info]
+config:
+  - name: min_image_width
+    type: int
+    default: 28
+    label: Drop images narrower than this many pixels
+  - name: min_image_height
+    type: int
+    default: 28
+    label: Drop images shorter than this many pixels
+tags: [nasa, openai, image, filter, multimodal]
