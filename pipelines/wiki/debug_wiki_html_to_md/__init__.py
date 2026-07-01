@@ -80,7 +80,7 @@ def apply_image_ref_alt_text(tree: HtmlElement) -> None:
     """Use Stage1 ``image_ref_id`` as Markdown image alt text.
 
     Stage1 rewrites matched images to ``src="images/<image_id>"`` and keeps
-    the article-local reference id in ``_image_ref_id``.  Setting ``alt`` here
+    the article-local reference id in ``_image_ref_id``. Setting ``alt`` here
     makes markdown conversion emit ``![<image_ref_id>](images/<image_id>)``:
     the brackets preserve the image reference id, while the URL remains the
     stable image id used by downstream Lance image APIs.
@@ -144,11 +144,42 @@ def restore_local_paths(text: str, url: str) -> str:
     return text
 
 
+def ctx_config(ctx: PipeContext) -> dict[str, Any]:
+    """Return config across old and new DCD context layouts."""
+    config = getattr(ctx, "config", None)
+    if config is None:
+        inputs = getattr(ctx, "inputs", None)
+        config = getattr(inputs, "config", None)
+    return config or {}
+
+
+def ctx_set_progress(ctx: PipeContext, completed: int) -> None:
+    set_progress = getattr(ctx, "set_progress", None)
+    if set_progress is not None:
+        set_progress(completed)
+        return
+    reporter = getattr(ctx, "reporter", None)
+    if reporter is not None:
+        reporter.set_progress(completed)
+
+
+def ctx_report_error(
+    ctx: PipeContext, modality: str, item_id: str, message: str,
+) -> None:
+    report_error = getattr(ctx, "report_error", None)
+    if report_error is not None:
+        report_error(modality, item_id, message)
+        return
+    reporter = getattr(ctx, "reporter", None)
+    if reporter is not None:
+        reporter.report_error(modality, item_id, message)
+
+
 def map(
     batch: dict[str, list[Any]], ctx: PipeContext,
 ) -> dict[str, list[Any]]:
     """Convert source HTML in *data* to cleaned markdown or HTML."""
-    config = ctx.config or {}
+    config = ctx_config(ctx)
     remove_ref: bool = config.get("remove_ref", True)
     out_format: str = config.get("out_format", "md")
     timeout: int = int(config.get("timeout", 30))
@@ -169,7 +200,7 @@ def map(
         if not source_html:
             data_out.append(source_html)
             info_out.append(json.dumps(info))
-            ctx.set_progress(i + 1)
+            ctx_set_progress(ctx, i + 1)
             continue
 
         url: str = info.get("url", "")
@@ -180,21 +211,23 @@ def map(
                 remove_ref=remove_ref, timeout=timeout,
             )
         except TimeoutError:
-            ctx.report_error(
+            ctx_report_error(
+                ctx,
                 "text", str(item_id),
                 f"Parse timed out after {timeout}s",
             )
             data_out.append("")
             info_out.append(json.dumps(info))
-            ctx.set_progress(i + 1)
+            ctx_set_progress(ctx, i + 1)
             continue
         except Exception as exc:
-            ctx.report_error(
+            ctx_report_error(
+                ctx,
                 "text", str(item_id), f"Parse failed: {exc}",
             )
             data_out.append("")
             info_out.append(json.dumps(info))
-            ctx.set_progress(i + 1)
+            ctx_set_progress(ctx, i + 1)
             continue
 
         if out_format == "html":
@@ -206,6 +239,6 @@ def map(
 
         info["format"] = out_format
         info_out.append(json.dumps(info))
-        ctx.set_progress(i + 1)
+        ctx_set_progress(ctx, i + 1)
 
     return {**batch, "data": data_out, "info": info_out}

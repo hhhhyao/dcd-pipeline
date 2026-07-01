@@ -11,25 +11,29 @@ For developer onboarding and quickstart steps, see `README.md`.
 
 Before doing implementation, validation, or local server work:
 
-1. Initialize submodules:
+1. Initialize the required reference submodule:
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init --recursive reference_repo/dcd-cli
 ```
 
-   Optional: sync all reference submodules to the latest upstream `main` (see `branch` in `.gitmodules`):
+   Optional: sync `dcd-cli` to the latest upstream `main` (see `branch` in `.gitmodules`):
 
 ```bash
-git submodule update --remote --merge
+git submodule update --remote --merge reference_repo/dcd-cli
 ```
 
-   Commit updated submodule pointers in the parent repo when you intend to pin a new upstream revision for collaborators.
+   Commit the updated `dcd-cli` submodule pointer in the parent repo when you intend to pin a new
+   upstream revision for collaborators. Do not initialize, sync, or pin `reference_repo/dcd` or
+   `reference_repo/dcd-server` unless the user explicitly asks and the private checkouts are
+   accessible.
 
-2. Confirm the upstream reference repos exist:
+2. Confirm the required upstream reference repo exists:
 
-- `reference_repo/dcd`
 - `reference_repo/dcd-cli`
-- `reference_repo/dcd-server`
+
+   `reference_repo/dcd` and `reference_repo/dcd-server` are optional private references. It is
+   acceptable for them to be absent or uninitialized.
 
 3. If a command depends on local host or credentials, read `.server_info` when present.
 
@@ -40,7 +44,11 @@ git submodule update --remote --merge
 export DCD_SECRET="$DCD_TOKEN"
 ```
 
-5. Do not assume `workspace/` already exists. Create it only when needed.
+5. For DCD server API probes, prefer `dcd-cli` or `curl`. If using a Python HTTP
+   client, set a normal `User-Agent`; bare `urllib` requests may be blocked by
+   the gateway with HTTP 403 / `error code: 1010`.
+
+6. Do not assume `workspace/` already exists. Create it only when needed.
 
 ## Normative References
 
@@ -72,7 +80,8 @@ If repo-local habits conflict with those docs, follow the upstream docs.
 - `skills/`
   Repo-local agent workflow docs
 - `reference_repo/`
-  Upstream reference repos managed as submodules
+  Reference repos managed as submodules. `dcd-cli` is required; `dcd` and `dcd-server` are optional
+  private references.
 - `workspace/`
   Repo-local runtime area for temporary or machine-specific artifacts
 
@@ -81,14 +90,20 @@ If repo-local habits conflict with those docs, follow the upstream docs.
 Source-of-truth split:
 
 - **Pipes** — `reference_repo/dcd-cli` (manifests, runtime semantics, `dcd` CLI, validation). This stays the normative reference for pipe work.
-- **Server/runtime implementation** — `reference_repo/dcd-server` when you need up-to-date server-side code (APIs, job runner, sandbox, and related `dataclawdev` code paths).
-- **Full-stack local viewer / frontend** — `reference_repo/dcd` for integrated layout and docs; if that submodule cannot track upstream, prefer `dcd-server` for backend freshness and still rely on `dcd-cli` for pipe contracts.
+- **Server/runtime implementation** — `reference_repo/dcd-server` is an optional private
+  reference. Use it only when the user explicitly needs server-side code details and the checkout is
+  available.
+- **Full-stack local viewer / frontend** — `reference_repo/dcd` is an optional private reference.
+  Use it only when the user explicitly needs full-stack or UI implementation details and the
+  checkout is available.
 
-- Treat `reference_repo/dcd`, `reference_repo/dcd-cli`, and `reference_repo/dcd-server` as upstream references.
+- Treat `reference_repo/dcd-cli` as the required upstream reference.
+- Treat `reference_repo/dcd` and `reference_repo/dcd-server` as optional private references; do not
+  assume they exist, track upstream, or should be updated.
 - Prefer wrapper scripts, environment variables, local work dirs, symlinks, and repo-local
   helper docs over editing upstream code.
-- Do not modify code under `reference_repo/dcd`, `reference_repo/dcd-cli`, or `reference_repo/dcd-server` unless the user
-  explicitly asks for upstream source changes.
+- Do not modify code under `reference_repo/dcd-cli`, `reference_repo/dcd`, or
+  `reference_repo/dcd-server` unless the user explicitly asks for upstream source changes.
 - If a local setup problem can be solved without upstream edits, solve it at the runtime or
   configuration layer instead.
 
@@ -114,7 +129,9 @@ When editing or creating a pipe:
 ## Runtime Rules
 
 Normative detail lives in `reference_repo/dcd-cli/docs/pipe.md` under the runtime,
-sandbox, volume, and network sections. For server-side execution detail, also see:
+sandbox, volume, and network sections. For server-side execution detail, prefer remote API probes
+and repo-local skills. If the optional private `reference_repo/dcd` checkout is available, these
+docs can be used as background:
 
 - `reference_repo/dcd/docs/manual/pipe.md`
 - `reference_repo/dcd/docs/design/job-lifecycle.md`
@@ -174,28 +191,45 @@ If you are preparing a new version, review the upload and update flow in
 
 Use these docs when deploying pipes to a host or reasoning about server-side execution.
 
+For repeatable DCD server operations, use the repo skill:
+
+- `skills/dcd-server-operations/SKILL.md` — general DCD server connection and API
+  workflow for access checks, pipe upload/update, job creation/polling, project
+  resources, and dataset/job/pipe version tracing.
+
 `dcd-cli`
 
 - `reference_repo/dcd-cli/docs/cli.md`
 - `reference_repo/dcd-cli/docs/pipe.md`
 
-`dcd`
+Optional private `dcd`
 
 - `reference_repo/dcd/docs/api.md`
 - `reference_repo/dcd/docs/design/job-lifecycle.md`
 - `reference_repo/dcd/docs/design/remote-runner.md`
 - `reference_repo/dcd/docs/design/runner.md`
 
+Important server API notes:
+
+- Project API paths use the project `slug`, not the display `name`.
+- DCD resource ids are usually names/slugs: dataset name, pipe name, job id string,
+  issue id, or skill name.
+- For project-scoped lists, use query params such as
+  `/api/datasets?project=<project_slug>` and `/api/pipes?project=<project_slug>`.
+- Prefer stable output dataset names for repeated debug runs; record the resulting
+  dataset version and producing job id in task-local docs.
+
 ## Local Web UI
 
-The browser UI ships with `reference_repo/dcd` (`dataclawdev`), not with `dcd-cli`.
+The browser UI does not ship with `dcd-cli`. Older setups used `reference_repo/dcd`, but that
+checkout is now an optional private reference.
 
 Use these references:
 
-- `reference_repo/dcd/README.md`
-- `reference_repo/dcd/docs/webapp.md`
 - `skills/dcd-local-server/SKILL.md` when the task is about starting, verifying, or
   troubleshooting the local viewer
+- `reference_repo/dcd/README.md` and `reference_repo/dcd/docs/webapp.md` only when the optional
+  private checkout is available
 
 For local viewer work in this repo:
 

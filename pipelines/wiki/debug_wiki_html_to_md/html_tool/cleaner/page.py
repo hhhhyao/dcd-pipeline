@@ -147,6 +147,28 @@ AD_DATA_VALUES = {
 RESPONSIVE_DATA_ATTRS = frozenset(
     ["data-last-responsive", "data-skip-responsive"]
 )
+FOOTER_REJECT_TOKENS = frozenset({
+    "after-content",
+    "footer-content",
+    "footer-icons",
+    "footer-info",
+    "footer-places",
+    "minerva-footer",
+    "read-more-container",
+})
+FOOTER_REJECT_IDS = frozenset({
+    "footer",
+    "footer-info",
+    "footer-places",
+    "mw-data-after-content",
+    "p-lang",
+})
+PREFERRED_WIKI_XPATH: tuple[tuple[str, str], ...] = (
+    (f".//*[{cls_xpath('mw-parser-output')}]", "mw-parser-output"),
+    (f".//*[{cls_xpath('mw-body-content')}]", "mw-body-content"),
+    (".//*[@id='bodyContent']", "bodyContent"),
+    (".//*[@id='mw-content-text']", "mw-content-text"),
+)
 
 # Regex matching class values that mark a forum post container.
 POST_CLASS_RE = re.compile(
@@ -311,6 +333,21 @@ def has_ad_data_attr(el: HtmlElement) -> bool:
 def has_responsive_data_attr(el: HtmlElement) -> bool:
     """Return True if the element carries a responsive-menu data attribute."""
     return bool(RESPONSIVE_DATA_ATTRS & set(el.attrib))
+
+
+def is_footer_chrome_candidate(el: HtmlElement) -> bool:
+    """Return True when an element is clearly wiki footer/language chrome."""
+    el_id = (el.get("id") or "").strip().lower()
+    classes = [cls.lower() for cls in el_classes(el)]
+    if el_id in FOOTER_REJECT_IDS:
+        return True
+    if any(token in el_id for token in FOOTER_REJECT_TOKENS):
+        return True
+    return any(
+        token in cls
+        for cls in classes
+        for token in FOOTER_REJECT_TOKENS
+    )
 
 
 def is_visually_hidden(el: HtmlElement) -> bool:
@@ -845,6 +882,11 @@ class PageCleaner:
         ``MIN_CONTENT_LENGTH`` characters of visible text is returned.
         Falls back to ``<body>`` then the tree root.
         """
+        if self._meta.is_wiki:
+            preferred = self._find_preferred_wiki_content_area()
+            if preferred is not None:
+                return preferred
+
         for tier in CONTENT_XPATH:
             for xpath in tier:
                 try:
@@ -853,6 +895,8 @@ class PageCleaner:
                     continue
                 for candidate in matches:
                     if not isinstance(candidate, HtmlElement):
+                        continue
+                    if is_footer_chrome_candidate(candidate):
                         continue
                     text = (candidate.text_content() or "").strip()
                     if len(text) >= MIN_CONTENT_LENGTH:
@@ -863,6 +907,29 @@ class PageCleaner:
         if bodies:
             return bodies[0]
         return self._tree
+
+    def _find_preferred_wiki_content_area(self) -> HtmlElement | None:
+        """Prefer MediaWiki article body containers over generic wrappers."""
+        for xpath, _label in PREFERRED_WIKI_XPATH:
+            best: tuple[int, HtmlElement] | None = None
+            try:
+                matches = self._tree.xpath(xpath)
+            except etree.XPathError:
+                continue
+            for candidate in matches:
+                if not isinstance(candidate, HtmlElement):
+                    continue
+                if is_footer_chrome_candidate(candidate):
+                    continue
+                text = (candidate.text_content() or "").strip()
+                text_len = len(text)
+                if text_len < MIN_CONTENT_LENGTH:
+                    continue
+                if best is None or text_len > best[0]:
+                    best = (text_len, candidate)
+            if best is not None:
+                return best[1]
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -1012,4 +1079,3 @@ def make_cleaner(meta: PageMeta) -> PageCleaner:
 
         return WikiCleaner(meta)
     return PageCleaner(meta)
-

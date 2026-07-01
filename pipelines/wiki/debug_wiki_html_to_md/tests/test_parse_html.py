@@ -46,6 +46,18 @@ class TestManifest:
 
 
 class TestMap:
+    def _run_md(
+        self,
+        html: str,
+        *,
+        url: str = "https://en.m.wikipedia.org/wiki/Example",
+    ) -> str:
+        pipe = load_pipe()
+        info = json.dumps({"url": url})
+        batch = {"id": ["case"], "info": [info], "data": [html]}
+        result = pipe.map(batch, CTX)
+        return result["data"][0]
+
     def test_simple_html(self) -> None:
         pipe = load_pipe()
         batch = {
@@ -108,6 +120,66 @@ class TestMap:
         assert "Content" in result["data"][0]
         out_info = json.loads(result["info"][0])
         assert out_info["format"] == "md"
+
+    def test_mobile_wiki_prefers_parser_output_over_post_content_footer(
+        self,
+    ) -> None:
+        html = """
+        <html><body>
+          <main>
+            <div id="mw-content-text">
+              <div class="mw-parser-output">
+                <p>Vitus Lake is a lake in Alaska with a real article body.</p>
+                <p>It is named for Vitus Bering and has glacial features.</p>
+              </div>
+            </div>
+          </main>
+          <div class="post-content footer-content">
+            <p>This page was last edited on 9 October 2022, at 06:45 (UTC).</p>
+            <p>Privacy policy About Wikipedia Disclaimers Contact Wikipedia
+            Terms of Use Desktop Developers Statistics Cookie statement</p>
+          </div>
+        </body></html>
+        """
+
+        md = self._run_md(html)
+
+        assert "Vitus Lake is a lake in Alaska" in md
+        assert "This page was last edited on" not in md
+        assert "Privacy policy" not in md
+
+    def test_desktop_wiki_prefers_parser_output_over_language_footer(
+        self,
+    ) -> None:
+        html = """
+        <html><body>
+          <div id="content">
+            <div id="mw-content-text">
+              <div class="mw-parser-output">
+                <p>North Shore is a rural municipality in Prince Edward Island.</p>
+                <h2>History</h2>
+                <p>The municipality was incorporated after an amalgamation.</p>
+              </div>
+            </div>
+            <div id="p-lang">
+              <h2>Languages</h2>
+              <ul><li>Español</li><li>Français</li><li>Português</li></ul>
+              <p>This page was last edited on 19 April 2025, at 21:24 (UTC).</p>
+              <p>Privacy policy About Wikipedia Disclaimers Contact Wikipedia</p>
+            </div>
+          </div>
+        </body></html>
+        """
+
+        md = self._run_md(
+            html,
+            url="https://en.wikipedia.org/wiki/North_Shore",
+        )
+
+        assert "North Shore is a rural municipality" in md
+        assert "## History" in md
+        assert "This page was last edited on" not in md
+        assert "Privacy policy" not in md
 
 
 class TestTrailingEmptyCells:

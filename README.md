@@ -9,27 +9,30 @@ working example of how a pipeline family can be organized, tested, and run local
 
 Use this path if you just cloned the repo and want to get to a runnable setup quickly.
 
-### 1. Initialize submodules
+### 1. Initialize the required reference submodule
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init --recursive reference_repo/dcd-cli
 ```
 
-This repo depends on:
+This repo depends on `reference_repo/dcd-cli` for pipe authoring, CLI behavior, and
+validation docs.
 
-- `reference_repo/dcd`
-- `reference_repo/dcd-cli`
-- `reference_repo/dcd-server`
+`reference_repo/dcd` and `reference_repo/dcd-server` may appear in older checkouts, but those
+upstream repositories can be private and are no longer required references for this workspace.
+Leave them uninitialized unless you explicitly need them and have access.
 
-### Optional: Sync reference repos to upstream `main`
+### Optional: Sync `dcd-cli` to upstream `main`
 
-Submodules track `main` in `.gitmodules`. After init, or when you want the latest upstream:
+After init, or when you want the latest `dcd-cli` upstream:
 
 ```bash
-git submodule update --remote --merge
+git submodule update --remote --merge reference_repo/dcd-cli
 ```
 
-Commit the updated submodule pointers in this repo if you want that revision recorded for others.
+Commit the updated `dcd-cli` submodule pointer in this repo if you want that revision recorded
+for others. Do not update or pin `reference_repo/dcd` or `reference_repo/dcd-server` unless the
+task explicitly calls for those private checkouts.
 
 ### 2. Create a virtual environment
 
@@ -98,15 +101,17 @@ dcd pipe validate pipelines/wiki/stage2_parse_html --host "$DCD_HOST"
   `reference_repo/dcd-cli/docs/cli.md`.
 - For text format conventions such as `html`, `markdown`, `json`, and `openai`, see
   `reference_repo/dcd-cli/docs/text-formats.md`.
-- For local viewer work, start with `reference_repo/dcd/README.md` and
-  `reference_repo/dcd/docs/webapp.md`.
+- For local viewer work, use `skills/dcd-local-server/SKILL.md`; if you have access to the
+  private `reference_repo/dcd` checkout, its viewer docs can be used as optional background.
 - For agent-specific execution rules in this repo, see `AGENTS.md`.
 
 ## Upstream repos (how they relate)
 
 - **`dcd-cli`** — Canonical docs and behavior for pipe manifests, CLI usage, and validation.
-- **`dcd-server`** — Server-side package from the same product line; prefer this checkout when you need **current** server/runtime code (HTTP stack, jobs, sandbox, and related `dataclawdev` implementation).
-- **`dcd`** — Full monorepo (including frontend sources and local viewer docs). Use it for **full-stack local setup** narratives; if the upstream `dcd` checkout is stale or inaccessible, treat **`dcd-server`** as the fresher reference for **backend** behavior and keep **`dcd-cli`** as the pipe contract.
+- **`dcd-server`** — Optional private server-side reference. Use it only when the task explicitly
+  needs server implementation details and your local checkout is available.
+- **`dcd`** — Optional private full-stack/local-viewer reference. Use it only when the task
+  explicitly needs local UI implementation details and your local checkout is available.
 
 ## Repo Layout
 
@@ -114,7 +119,8 @@ dcd pipe validate pipelines/wiki/stage2_parse_html --host "$DCD_HOST"
   Deployable pipeline packages. Preferred layout:
   `pipelines/<family>/<pipe_name>/`
 - `reference_repo/`
-  Upstream reference repos managed as git submodules
+  Reference repos managed as git submodules. `dcd-cli` is the required pipe contract; `dcd` and
+  `dcd-server` are optional private references and do not need to be initialized.
 - `skills/`
   Agent-oriented workflow docs
 - `workspace/`
@@ -149,7 +155,8 @@ In practice:
 
 ## Local DCD Viewer
 
-The local browser UI lives in `reference_repo/dcd`, not in `dcd-cli`.
+The local browser UI does not live in `dcd-cli`. Older setups used `reference_repo/dcd`, but that
+upstream can be private and is optional in this workspace.
 
 Keep in mind:
 

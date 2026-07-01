@@ -53,6 +53,7 @@ Thumbs.db
 
 # Lance working directories (pipeline outputs, not fixtures)
 workspace/
+_my_space/
 
 # Local archived pipelines kept outside git history
 pipelines/wiki/old_pipelines/
